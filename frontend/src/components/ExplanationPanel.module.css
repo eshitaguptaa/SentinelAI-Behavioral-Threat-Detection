@@ -14,6 +14,13 @@
   margin-bottom: 0.85rem;
 }
 
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
 .title {
   margin: 0;
   font-size: 1rem;
@@ -41,7 +48,7 @@
 
 .scores {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.65rem;
   margin-bottom: 1rem;
 }
@@ -112,9 +119,9 @@
   font-weight: 500;
 }
 
-.empty {
-  margin: 0.5rem 0 0;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  line-height: 1.45;
+@media (max-width: 640px) {
+  .scores {
+    grid-template-columns: 1fr;
+  }
 }
+

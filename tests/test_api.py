@@ -88,13 +88,15 @@ def test_predict_route(
     request_with_model: SimpleNamespace,
     mock_model: MagicMock,
 ) -> None:
-    """POST /predict pipeline via route function returns all three sections."""
+    """POST /predict pipeline via route function returns all sections."""
     body = PredictRequest(
         feature_vector=FeatureVectorPayload.model_validate(_vector_payload())
     )
     response = predict(request_with_model, body)
     mock_model.predict_one.assert_called_once()
     assert response.prediction.employee_id == "EMP-100"
+    assert response.attack_classification.attack_type
+    assert 0.0 <= response.attack_classification.attack_confidence <= 1.0
     assert response.risk_assessment.risk_level in {
         "LOW",
         "MEDIUM",
@@ -103,6 +105,16 @@ def test_predict_route(
     }
     assert response.explanation.summary
     assert response.explanation.recommendation
+    assert response.status in {"Normal", "Suspicious", "Confirmed Threat"}
+    # Status must follow hierarchy (not Isolation Forest is_anomaly alone).
+    if response.risk_assessment.risk_level in {"HIGH", "CRITICAL"}:
+        assert response.status == "Confirmed Threat"
+    if (
+        response.risk_assessment.risk_level == "LOW"
+        and response.attack_classification.attack_type == "Normal Activity"
+    ):
+        assert response.status == "Normal"
+        assert response.attack_classification.attack_confidence == 0.0
 
 
 def test_predict_batch_empty_rejected(request_with_model: SimpleNamespace) -> None:

@@ -4,6 +4,21 @@ export type RiskLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
 export type BackendStatus = "online" | "offline" | "checking";
 
+/** Final SOC status — derived on the backend from risk_level + attack_type. */
+export type FinalStatus = "Normal" | "Suspicious" | "Confirmed Threat";
+
+export type AttackType =
+  | "Impossible Travel"
+  | "Brute Force"
+  | "Credential Stuffing"
+  | "Device Spoofing"
+  | "Lateral Movement"
+  | "Insider Activity"
+  | "Mass Download"
+  | "Suspicious VPN Usage"
+  | "Normal Activity"
+  | string;
+
 export interface AppInfo {
   application: string;
   version: string;
@@ -40,6 +55,14 @@ export interface RiskAssessment {
   recommendation: string;
 }
 
+export interface AttackClassification {
+  employee_id: string;
+  simulation_day: string;
+  attack_type: AttackType;
+  attack_confidence: number;
+  matched_signals: string[];
+}
+
 export interface RiskExplanation {
   employee_id: string;
   simulation_day: string;
@@ -54,7 +77,10 @@ export interface RiskExplanation {
 export interface PredictResult {
   prediction: AnomalyPrediction;
   risk_assessment: RiskAssessment;
+  attack_classification: AttackClassification;
   explanation: RiskExplanation;
+  /** Backend-derived final status — never compute this in the UI. */
+  status: FinalStatus | string;
 }
 
 export interface PredictBatchResponse {
@@ -69,7 +95,9 @@ export interface EmployeeRiskRow {
   anomaly_score: number;
   risk_score: number;
   risk_level: string;
-  is_anomaly: boolean;
+  attack_type: string;
+  attack_confidence: number;
+  status: FinalStatus | string;
   result: PredictResult;
 }
 
@@ -84,4 +112,23 @@ export const RISK_COLORS: Record<string, string> = {
   MEDIUM: "#e4c35a",
   HIGH: "#e08a3c",
   CRITICAL: "#e24b4b",
+};
+
+export const STATUS_COLORS: Record<string, string> = {
+  Normal: "#3dba7a",
+  Suspicious: "#e4c35a",
+  "Confirmed Threat": "#e24b4b",
+};
+
+/** Unique badge colours per attack classification label. */
+export const ATTACK_COLORS: Record<string, string> = {
+  "Impossible Travel": "#5b8def",
+  "Brute Force": "#e24b4b",
+  "Credential Stuffing": "#c45cdd",
+  "Device Spoofing": "#27a8a0",
+  "Lateral Movement": "#e08a3c",
+  "Insider Activity": "#d4a017",
+  "Mass Download": "#e06b9f",
+  "Suspicious VPN Usage": "#6b8cae",
+  "Normal Activity": "#3dba7a",
 };

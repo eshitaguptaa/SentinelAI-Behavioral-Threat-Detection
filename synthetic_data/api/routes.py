@@ -2,7 +2,8 @@
 
 Pipeline (no retraining)::
 
-    FeatureVector → IsolationForest (loaded) → RiskEngine → Explainability
+    FeatureVector → IsolationForest → RiskEngine → AttackClassification
+        → Final Status → Explainability
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 from synthetic_data.anomaly_detection.scoring import AnomalyPrediction
 from synthetic_data.api.schemas import (
     AnomalyPredictionOut,
+    AttackClassificationOut,
     ErrorResponse,
     HealthResponse,
     PredictBatchRequest,
@@ -30,6 +32,9 @@ from synthetic_data.api.validation import (
     build_feature_vectors,
     require_fitted_model,
 )
+from synthetic_data.attack_classification import classify_attack
+from synthetic_data.attack_classification.schema import AttackClassification
+from synthetic_data.decision_status import derive_final_status
 from synthetic_data.explainability import explain as explain_risk
 from synthetic_data.explainability.schema import RiskExplanation
 from synthetic_data.feature_engineering.feature_schema import FeatureVector
@@ -67,6 +72,16 @@ def _assessment_out(assessment: RiskAssessment) -> RiskAssessmentOut:
     )
 
 
+def _attack_out(classification: AttackClassification) -> AttackClassificationOut:
+    return AttackClassificationOut(
+        employee_id=classification.employee_id,
+        simulation_day=classification.simulation_day,
+        attack_type=classification.attack_type,
+        attack_confidence=float(classification.attack_confidence),
+        matched_signals=list(classification.matched_signals),
+    )
+
+
 def _explanation_out(explanation: RiskExplanation) -> RiskExplanationOut:
     return RiskExplanationOut(
         employee_id=explanation.employee_id,
@@ -81,14 +96,18 @@ def _explanation_out(explanation: RiskExplanation) -> RiskExplanationOut:
 
 
 def _run_pipeline(model: Any, vector: FeatureVector) -> PredictResponse:
-    """Execute Isolation Forest → Risk → Explainability for one vector."""
+    """Execute IF → Risk → Attack Classification → Final Status → Explainability."""
     prediction = model.predict_one(vector)
     assessment = assess_risk(prediction, vector)
+    attack = classify_attack(vector)
+    final_status = derive_final_status(assessment.risk_level, attack.attack_type)
     explanation = explain_risk(assessment, vector)
     return PredictResponse(
         prediction=_prediction_out(prediction),
         risk_assessment=_assessment_out(assessment),
+        attack_classification=_attack_out(attack),
         explanation=_explanation_out(explanation),
+        status=final_status,
     )
 
 
@@ -124,7 +143,8 @@ def health() -> HealthResponse:
     summary="Predict risk for one feature vector",
     description=(
         "Run the SentinelAI inference pipeline on a single Phase 8 feature vector: "
-        "Isolation Forest → Risk Engine → Explainability. Does not retrain models."
+        "Isolation Forest → Risk Engine → Attack Classification → Explainability. "
+        "Does not retrain models."
     ),
     responses={
         200: {"model": PredictResponse},
@@ -136,7 +156,7 @@ def health() -> HealthResponse:
     tags=["inference"],
 )
 def predict(request: Request, body: PredictRequest) -> PredictResponse:
-    """Predict anomaly, risk, and explanation for one employee-day."""
+    """Predict anomaly, risk, attack type, and explanation for one employee-day."""
     model = _get_model(request)
     try:
         vector = build_feature_vector(body.feature_vector)
@@ -161,7 +181,7 @@ def predict(request: Request, body: PredictRequest) -> PredictResponse:
     summary="Predict risk for a batch of feature vectors",
     description=(
         "Run the SentinelAI inference pipeline on a non-empty batch of feature "
-        "vectors. Processing is deterministic and O(n). Does not retrain models."
+        "vectors, including rule-based attack classification. Deterministic O(n)."
     ),
     responses={
         200: {"model": PredictBatchResponse},
@@ -173,21 +193,27 @@ def predict(request: Request, body: PredictRequest) -> PredictResponse:
     tags=["inference"],
 )
 def predict_batch(request: Request, body: PredictBatchRequest) -> PredictBatchResponse:
-    """Batch-predict anomaly, risk, and explanation for many employee-days."""
+    """Batch-predict anomaly, risk, attack type, and explanation."""
     model = _get_model(request)
     try:
         vectors = build_feature_vectors(body.feature_vectors)
-        # Batch anomaly detection once, then risk/explain per row (aligned).
         predictions = model.predict(vectors)
         results: list[PredictResponse] = []
         for prediction, vector in zip(predictions, vectors, strict=True):
             assessment = assess_risk(prediction, vector)
+            attack = classify_attack(vector)
+            final_status = derive_final_status(
+                assessment.risk_level,
+                attack.attack_type,
+            )
             explanation = explain_risk(assessment, vector)
             results.append(
                 PredictResponse(
                     prediction=_prediction_out(prediction),
                     risk_assessment=_assessment_out(assessment),
+                    attack_classification=_attack_out(attack),
                     explanation=_explanation_out(explanation),
+                    status=final_status,
                 )
             )
         return PredictBatchResponse(results=results)

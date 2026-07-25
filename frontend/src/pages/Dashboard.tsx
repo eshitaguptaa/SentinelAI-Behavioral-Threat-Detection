@@ -37,7 +37,9 @@ function toRows(results: PredictResult[]): EmployeeRiskRow[] {
     anomaly_score: result.prediction.normalized_score,
     risk_score: result.risk_assessment.risk_score,
     risk_level: result.risk_assessment.risk_level,
-    is_anomaly: result.prediction.is_anomaly,
+    attack_type: result.attack_classification.attack_type,
+    attack_confidence: result.attack_classification.attack_confidence,
+    status: result.status,
     result,
   }));
 }
@@ -93,10 +95,12 @@ export default function Dashboard() {
 
   const stats = useMemo(() => {
     const employees = new Set(rows.map((row) => row.employee_id)).size;
-    const anomalies = rows.filter((row) => row.is_anomaly).length;
+    const confirmed = rows.filter(
+      (row) => row.status === "Confirmed Threat",
+    ).length;
     const high = rows.filter((row) => row.risk_level === "HIGH").length;
     const critical = rows.filter((row) => row.risk_level === "CRITICAL").length;
-    return { employees, anomalies, high, critical };
+    return { employees, confirmed, high, critical };
   }, [rows]);
 
   const refreshBackendStatus = useCallback(async () => {
@@ -209,10 +213,10 @@ export default function Dashboard() {
                 hint="Unique IDs in current batch"
               />
               <StatsCard
-                label="Anomalies"
-                value={stats.anomalies}
-                tone="anomaly"
-                hint="Isolation Forest flagged"
+                label="Confirmed Threats"
+                value={stats.confirmed}
+                tone="critical"
+                hint="Final status Confirmed Threat"
               />
               <StatsCard
                 label="High Risk"

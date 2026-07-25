@@ -93,12 +93,27 @@ class RiskExplanationOut(BaseModel):
     recommendation: str
 
 
+class AttackClassificationOut(BaseModel):
+    """Rule-based attack classification fields exposed over HTTP."""
+
+    employee_id: str
+    simulation_day: str
+    attack_type: str
+    attack_confidence: float
+    matched_signals: list[str]
+
+
 class PredictResponse(BaseModel):
     """Combined pipeline result for one employee-day."""
 
     prediction: AnomalyPredictionOut
     risk_assessment: RiskAssessmentOut
+    attack_classification: AttackClassificationOut
     explanation: RiskExplanationOut
+    status: str = Field(
+        ...,
+        description="Final SOC status: Normal | Suspicious | Confirmed Threat",
+    )
 
 
 class PredictBatchResponse(BaseModel):
