@@ -1,4 +1,8 @@
-"""Timeline event types and factory helpers for normal workday simulation."""
+"""Timeline event types and factory helpers for normal workday simulation.
+
+Event-type constants are defined in ``event_catalog`` and re-exported here so
+existing imports (``from ...event_factory import LOGIN``) keep working.
+"""
 
 from __future__ import annotations
 
@@ -6,35 +10,117 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-
-# Supported normal-behavior event types.
-DEVICE_CONNECT = "DEVICE_CONNECT"
-LOGIN = "LOGIN"
-VPN_CONNECT = "VPN_CONNECT"
-VPN_DISCONNECT = "VPN_DISCONNECT"
-APPLICATION_ACCESS = "APPLICATION_ACCESS"
-RESOURCE_ACCESS = "RESOURCE_ACCESS"
-EMAIL_ACCESS = "EMAIL_ACCESS"
-MEETING_JOIN = "MEETING_JOIN"
-FILE_ACCESS = "FILE_ACCESS"
-BREAK_START = "BREAK_START"
-BREAK_END = "BREAK_END"
-LOGOUT = "LOGOUT"
-
-EVENT_TYPES: tuple[str, ...] = (
+from synthetic_data.generators.event_catalog import (
+    ADMIN_LOGIN,
+    ALL_EVENT_TYPES,
+    ANALYTICS_ACCESS,
+    API_REQUEST,
+    APPLICATION_ACCESS,
+    AUTH_EVENT_TYPES,
+    AWS_CONSOLE,
+    AZURE_PORTAL,
+    BREAK_END,
+    BREAK_START,
+    CANVA_ACCESS,
+    CRM_ACCESS,
+    DATABASE_ACCESS,
     DEVICE_CONNECT,
+    DEVICE_DISCONNECT,
+    DOCKER_ACCESS,
+    DOCUMENT_ACCESS,
+    EMAIL_ACCESS,
+    EXCEL_ACCESS,
+    FAILED_LOGIN,
+    FILE_ACCESS,
+    FILE_DELETE,
+    FILE_DOWNLOAD,
+    FILE_READ,
+    FILE_UPLOAD,
+    FILE_WRITE,
+    GITHUB_ACCESS,
+    GIT_PULL,
+    GIT_PUSH,
+    HR_RECORDS_ACCESS,
+    JIRA_ACCESS,
     LOGIN,
+    LOGOUT,
+    MEETING_JOIN,
+    MFA_FAILURE,
+    MFA_SUCCESS,
+    PASSWORD_CHANGE,
+    PAYROLL_ACCESS,
+    POLICY_CHANGE,
+    PRIVILEGE_ESCALATION,
+    REMOTE_DESKTOP,
+    RESOURCE_ACCESS,
+    RESOURCE_TOUCH_TYPES,
+    SLACK_ACCESS,
+    SSH_LOGIN,
+    TEAMS_ACCESS,
+    USB_INSERT,
+    USB_REMOVE,
     VPN_CONNECT,
     VPN_DISCONNECT,
-    APPLICATION_ACCESS,
-    RESOURCE_ACCESS,
-    EMAIL_ACCESS,
-    MEETING_JOIN,
-    FILE_ACCESS,
-    BREAK_START,
-    BREAK_END,
-    LOGOUT,
 )
+
+# Backward-compatible alias used throughout the codebase.
+EVENT_TYPES: tuple[str, ...] = ALL_EVENT_TYPES
+
+__all__ = [
+    "ADMIN_LOGIN",
+    "ALL_EVENT_TYPES",
+    "ANALYTICS_ACCESS",
+    "API_REQUEST",
+    "APPLICATION_ACCESS",
+    "AUTH_EVENT_TYPES",
+    "AWS_CONSOLE",
+    "AZURE_PORTAL",
+    "BREAK_END",
+    "BREAK_START",
+    "CANVA_ACCESS",
+    "CRM_ACCESS",
+    "DATABASE_ACCESS",
+    "DEVICE_CONNECT",
+    "DEVICE_DISCONNECT",
+    "DOCKER_ACCESS",
+    "DOCUMENT_ACCESS",
+    "EMAIL_ACCESS",
+    "EVENT_TYPES",
+    "EXCEL_ACCESS",
+    "EventFactory",
+    "FAILED_LOGIN",
+    "FILE_ACCESS",
+    "FILE_DELETE",
+    "FILE_DOWNLOAD",
+    "FILE_READ",
+    "FILE_UPLOAD",
+    "FILE_WRITE",
+    "GITHUB_ACCESS",
+    "GIT_PULL",
+    "GIT_PUSH",
+    "HR_RECORDS_ACCESS",
+    "JIRA_ACCESS",
+    "LOGIN",
+    "LOGOUT",
+    "MEETING_JOIN",
+    "MFA_FAILURE",
+    "MFA_SUCCESS",
+    "PASSWORD_CHANGE",
+    "PAYROLL_ACCESS",
+    "POLICY_CHANGE",
+    "PRIVILEGE_ESCALATION",
+    "REMOTE_DESKTOP",
+    "RESOURCE_ACCESS",
+    "RESOURCE_TOUCH_TYPES",
+    "SLACK_ACCESS",
+    "SSH_LOGIN",
+    "TEAMS_ACCESS",
+    "TimelineEvent",
+    "USB_INSERT",
+    "USB_REMOVE",
+    "VPN_CONNECT",
+    "VPN_DISCONNECT",
+]
 
 
 @dataclass(slots=True)

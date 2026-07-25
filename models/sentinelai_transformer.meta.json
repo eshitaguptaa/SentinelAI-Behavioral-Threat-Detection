@@ -1,0 +1,41 @@
+{
+  "format": "sentinelai_behaviour_transformer_v1",
+  "config": {
+    "max_seq_len": 64,
+    "pad_token": "<PAD>",
+    "unk_token": "<UNK>",
+    "mask_token": "<MASK>",
+    "d_model": 64,
+    "nhead": 4,
+    "num_layers": 3,
+    "dim_feedforward": 128,
+    "dropout": 0.1,
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "max_epochs": 12,
+    "patience": 4,
+    "validation_fraction": 0.15,
+    "anomaly_threshold_percentile": 95.0,
+    "random_seed": 42,
+    "num_workers": 0,
+    "device": "cpu"
+  },
+  "error_mean": 1.6403792483458033,
+  "error_std": 0.48981509313968336,
+  "anomaly_threshold": 2.419278013706207,
+  "calibration": {
+    "mean": 1.6403792483458033,
+    "std": 0.48981509313968336,
+    "p80": 2.1079556465148928,
+    "p90": 2.287523293495178,
+    "p95": 2.419278013706207,
+    "p99": 2.663370568752289,
+    "error_min": 0.5296801328659058,
+    "error_max": 3.0565621852874756,
+    "n_samples": 2134
+  },
+  "vocab_size": 50,
+  "best_epoch": 12,
+  "best_val_loss": 1.2284969091415405
+}

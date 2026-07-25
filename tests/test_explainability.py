@@ -59,15 +59,15 @@ def _assessment(**overrides: Any) -> RiskAssessment:
 
 
 def test_summaries_by_level() -> None:
-    """Each risk level maps to a fixed summary string."""
+    """Each risk level maps to a fixed Normal-Activity summary string."""
     assert "consistent" in summary_for_risk_level("LOW").lower()
     assert "moderate" in summary_for_risk_level("MEDIUM").lower()
     assert "elevated" in summary_for_risk_level("HIGH").lower()
-    assert "malicious" in summary_for_risk_level("CRITICAL").lower()
+    assert "investigation" in summary_for_risk_level("CRITICAL").lower()
 
 
 def test_explain_reuses_assessment_fields() -> None:
-    """Factors and recommendation are copied; risk score is unchanged."""
+    """Factors are copied; recommendation is attack-aware; risk score unchanged."""
     assessment = _assessment()
     vector = _vector()
     explanation = explain(assessment, vector)
@@ -75,7 +75,7 @@ def test_explain_reuses_assessment_fields() -> None:
     assert isinstance(explanation, RiskExplanation)
     assert explanation.risk_score == assessment.risk_score
     assert explanation.risk_level == assessment.risk_level
-    assert explanation.recommendation == assessment.recommendation
+    assert "monitoring" in explanation.recommendation.lower()
     assert explanation.contributing_factors == assessment.contributing_factors
     assert explanation.summary == summary_for_risk_level("CRITICAL")
     assert explanation.observations

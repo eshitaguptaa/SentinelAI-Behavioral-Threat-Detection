@@ -11,6 +11,7 @@ class FinalStatus(str, Enum):
 
     NORMAL = "Normal"
     SUSPICIOUS = "Suspicious"
+    UNDER_INVESTIGATION = "Under Investigation"
     CONFIRMED_THREAT = "Confirmed Threat"
 
 

@@ -21,8 +21,14 @@ function ExplanationPanel({ result }: ExplanationPanelProps) {
     );
   }
 
-  const { explanation, risk_assessment, prediction, attack_classification } =
-    result;
+  const {
+    explanation,
+    risk_assessment,
+    prediction,
+    attack_classification,
+    behaviour_insight: insight,
+    mitre,
+  } = result;
   const levelColor =
     RISK_COLORS[explanation.risk_level] || "var(--text-muted)";
   const attackColor =
@@ -78,16 +84,57 @@ function ExplanationPanel({ result }: ExplanationPanelProps) {
           <strong>{prediction.normalized_score.toFixed(1)}</strong>
         </div>
         <div>
+          <span className={styles.scoreLabel}>Behaviour</span>
+          <strong>
+            {(insight?.behaviour_score ?? 100 - prediction.normalized_score).toFixed(
+              1,
+            )}
+          </strong>
+        </div>
+        <div>
+          <span className={styles.scoreLabel}>Confidence</span>
+          <strong>
+            {Math.round((insight?.confidence_score ?? attack_classification.attack_confidence) * 100)}
+            %
+          </strong>
+        </div>
+        <div>
           <span className={styles.scoreLabel}>Risk</span>
           <strong>{risk_assessment.risk_score.toFixed(1)}</strong>
         </div>
-        <div>
-          <span className={styles.scoreLabel}>Attack confidence</span>
-          <strong>
-            {Math.round(attack_classification.attack_confidence * 100)}%
-          </strong>
-        </div>
       </div>
+
+      {mitre ? (
+        <div className={styles.block}>
+          <h3>MITRE ATT&CK</h3>
+          <p>
+            <strong>
+              {mitre.technique_id} · {mitre.technique_name}
+            </strong>
+            {" — "}
+            {mitre.tactic_name} ({mitre.tactic_id})
+          </p>
+          <p className={styles.muted}>{mitre.description}</p>
+        </div>
+      ) : null}
+
+      {insight?.top_suspicious_events?.length ? (
+        <div className={styles.block}>
+          <h3>Top Suspicious Events</h3>
+          <ul>
+            {insight.top_suspicious_events.map((event) => (
+              <li key={`${event.index}-${event.event_type}`}>
+                <strong>
+                  #{event.index + 1} {event.event_type}
+                </strong>
+                {" — "}
+                {event.explanation ||
+                  `reconstruction error ${event.reconstruction_error.toFixed(3)}`}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className={styles.block}>
         <h3>Attack Classification</h3>

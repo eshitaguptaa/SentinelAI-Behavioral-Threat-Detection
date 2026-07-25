@@ -80,7 +80,7 @@ def request_with_model(mock_model: MagicMock) -> SimpleNamespace:
 def test_root_and_health() -> None:
     """System endpoints return expected payloads."""
     assert root().application == "SentinelAI"
-    assert root().version == "1.0"
+    assert root().version == "2.0"
     assert health().status == "healthy"
 
 
@@ -105,9 +105,18 @@ def test_predict_route(
     }
     assert response.explanation.summary
     assert response.explanation.recommendation
-    assert response.status in {"Normal", "Suspicious", "Confirmed Threat"}
+    assert response.status in {
+        "Normal",
+        "Suspicious",
+        "Under Investigation",
+        "Confirmed Threat",
+    }
     # Status must follow hierarchy (not Isolation Forest is_anomaly alone).
-    if response.risk_assessment.risk_level in {"HIGH", "CRITICAL"}:
+    if response.attack_classification.attack_type == "Normal Activity":
+        assert response.status != "Confirmed Threat"
+        if response.risk_assessment.risk_level in {"HIGH", "CRITICAL"}:
+            assert response.status == "Under Investigation"
+    elif response.risk_assessment.risk_level in {"HIGH", "CRITICAL"}:
         assert response.status == "Confirmed Threat"
     if (
         response.risk_assessment.risk_level == "LOW"

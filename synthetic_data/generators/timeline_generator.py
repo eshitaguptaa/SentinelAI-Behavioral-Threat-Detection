@@ -17,17 +17,22 @@ from synthetic_data.generators.event_factory import (
     BREAK_END,
     BREAK_START,
     DEVICE_CONNECT,
+    DEVICE_DISCONNECT,
     EMAIL_ACCESS,
     EventFactory,
     FILE_ACCESS,
+    FILE_READ,
+    FILE_WRITE,
     LOGIN,
     LOGOUT,
     MEETING_JOIN,
+    MFA_SUCCESS,
     RESOURCE_ACCESS,
     TimelineEvent,
     VPN_CONNECT,
     VPN_DISCONNECT,
 )
+from synthetic_data.generators.role_activities import activities_for_employee
 from synthetic_data.generators.session_generator import SessionFactory
 from synthetic_data.models import BehaviorProfile, Device, Employee, Session
 
@@ -389,11 +394,59 @@ def _spread_timestamps(
     return timestamps
 
 
+def _department_name_for_employee(employee: Employee) -> str:
+    """Resolve a human department name from ``employee.department_id``."""
+    from synthetic_data.config import DEPARTMENT_DEFINITIONS
+
+    dept_id = (employee.department_id or "").upper()
+    for name, _sensitivity in DEPARTMENT_DEFINITIONS:
+        slug = "".join(ch if ch.isalnum() else "_" for ch in name.upper())
+        slug = "_".join(part for part in slug.split("_") if part)
+        if dept_id == f"DEPT-{slug}" or name.upper() in dept_id:
+            return name
+        # Soft match on keywords.
+        token = name.split()[0].upper()
+        if token and token in dept_id:
+            return name
+    return "Engineering"
+
+
+def _weighted_activity(weights: Sequence[tuple[str, float]], faker: Faker) -> str:
+    """Sample an event type from department activity weights."""
+    total = sum(weight for _, weight in weights)
+    if total <= 0:
+        return EMAIL_ACCESS
+    pick = faker.random.uniform(0, total)
+    cumulative = 0.0
+    for event_type, weight in weights:
+        cumulative += weight
+        if pick <= cumulative:
+            return event_type
+    return weights[-1][0]
+
+
+def _resource_for_event(
+    event_type: str,
+    *,
+    work_pool: Sequence[str],
+    meeting_resource: str | None,
+    email_resource: str,
+    employee: Employee,
+    faker: Faker,
+) -> str | None:
+    """Attach a plausible resource id for the chosen event type."""
+    if event_type in {EMAIL_ACCESS}:
+        return email_resource
+    if event_type in {MEETING_JOIN, "TEAMS_ACCESS", "SLACK_ACCESS"}:
+        return meeting_resource
+    return _weighted_choice(work_pool, employee.role, faker)
+
+
 def _emit_work_activity(
     *,
     event_factory: EventFactory,
     timestamp: datetime,
-    profile: BehaviorProfile,
+    profile: BehaviorProfile,  # retained for call-site compatibility / future profile knobs
     employee: Employee,
     work_pool: Sequence[str],
     meeting_resource: str | None,
@@ -401,24 +454,36 @@ def _emit_work_activity(
     common: dict[str, str | None],
     faker: Faker,
 ) -> TimelineEvent:
-    """Create one natural work activity event."""
-    roll = faker.random.random()
+    """Create one natural work activity using department-aware catalogs."""
+    _ = profile
+    dept_name = _department_name_for_employee(employee)
+    activities = activities_for_employee(department=dept_name, role=employee.role)
 
-    # Email checks are common for most roles.
-    if roll < 0.18:
+    # Occasional MFA challenge mid-day (~4%).
+    if faker.random.random() < 0.04:
         return event_factory.create(
             timestamp=timestamp,
-            event_type=EMAIL_ACCESS,
-            resource_id=email_resource,
+            event_type=MFA_SUCCESS,
             **common,
         )
 
-    # Meetings only on collaboration tools.
-    if roll < 0.28 and meeting_resource is not None:
+    # Mix role catalog (~75%) with legacy resource-classified events (~25%).
+    if faker.random.random() < 0.75:
+        event_type = _weighted_activity(activities, faker)
+        resource_id = _resource_for_event(
+            event_type,
+            work_pool=work_pool,
+            meeting_resource=meeting_resource,
+            email_resource=email_resource,
+            employee=employee,
+            faker=faker,
+        )
+        if event_type == FILE_ACCESS:
+            event_type = FILE_READ if faker.random.random() < 0.65 else FILE_WRITE
         return event_factory.create(
             timestamp=timestamp,
-            event_type=MEETING_JOIN,
-            resource_id=meeting_resource,
+            event_type=event_type,
+            resource_id=resource_id,
             **common,
         )
 
@@ -432,6 +497,8 @@ def _emit_work_activity(
         )
 
     event_type = _classify_work_event(resource_id)
+    if event_type == FILE_ACCESS:
+        event_type = FILE_READ if faker.random.random() < 0.65 else FILE_WRITE
     return event_factory.create(
         timestamp=timestamp,
         event_type=event_type,
@@ -527,11 +594,11 @@ def _generate_employee_workday(
         used_vpn = True
         cursor += timedelta(minutes=faker.random.randint(1, 3))
 
-    # Target 20–40 total events for the workday.
-    target_total = faker.random.randint(20, 40)
-    # Keep enough work activities that totals land in the 20–40 band
+    # Target 24–48 total events for longer, more realistic sessions.
+    target_total = faker.random.randint(24, 48)
+    # Keep enough work activities that totals land in the band
     # after connect/login/VPN/lunch/logout skeleton events.
-    remaining = max(16, target_total - 8)
+    remaining = max(18, target_total - 8)
 
     if lunch is not None:
         break_start, break_end = lunch
@@ -623,6 +690,14 @@ def _generate_employee_workday(
         event_factory.create(
             timestamp=logout_time,
             event_type=LOGOUT,
+            **common,
+        )
+    )
+    disconnect_time = logout_time + timedelta(minutes=faker.random.randint(1, 3))
+    events.append(
+        event_factory.create(
+            timestamp=disconnect_time,
+            event_type=DEVICE_DISCONNECT,
             **common,
         )
     )

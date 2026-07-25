@@ -17,9 +17,9 @@ from synthetic_data.decision_status import FinalStatus, derive_final_status
         ("MEDIUM", "Device Spoofing", FinalStatus.SUSPICIOUS.value),
         ("MEDIUM", "Normal Activity", FinalStatus.SUSPICIOUS.value),
         ("HIGH", "Brute Force", FinalStatus.CONFIRMED_THREAT.value),
-        ("HIGH", "Normal Activity", FinalStatus.CONFIRMED_THREAT.value),
+        ("HIGH", "Normal Activity", FinalStatus.UNDER_INVESTIGATION.value),
         ("CRITICAL", "Credential Stuffing", FinalStatus.CONFIRMED_THREAT.value),
-        ("CRITICAL", "Normal Activity", FinalStatus.CONFIRMED_THREAT.value),
+        ("CRITICAL", "Normal Activity", FinalStatus.UNDER_INVESTIGATION.value),
     ],
 )
 def test_derive_final_status(
@@ -28,6 +28,12 @@ def test_derive_final_status(
     expected: str,
 ) -> None:
     assert derive_final_status(risk_level, attack_type) == expected
+
+
+def test_normal_activity_never_confirmed_threat() -> None:
+    for level in ("LOW", "MEDIUM", "HIGH", "CRITICAL"):
+        status = derive_final_status(level, "Normal Activity")
+        assert status != FinalStatus.CONFIRMED_THREAT.value
 
 
 def test_normal_activity_confidence_is_zero() -> None:

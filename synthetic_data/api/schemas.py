@@ -58,7 +58,7 @@ class PredictBatchRequest(BaseModel):
 
 
 class AnomalyPredictionOut(BaseModel):
-    """Phase 9 anomaly prediction fields exposed over HTTP."""
+    """Anomaly prediction fields exposed over HTTP."""
 
     employee_id: str
     simulation_day: str
@@ -66,6 +66,44 @@ class AnomalyPredictionOut(BaseModel):
     normalized_score: float
     prediction: int
     is_anomaly: bool
+
+
+class SuspiciousEventOut(BaseModel):
+    """Single influential event from Transformer reconstruction error."""
+
+    index: int
+    event_type: str
+    reconstruction_error: float
+    attention_mass: float = 0.0
+    explanation: str = ""
+
+
+class BehaviourInsightOut(BaseModel):
+    """Transformer behavioural explainability payload for the SOC dashboard."""
+
+    session_id: str = ""
+    reconstruction_error: float = 0.0
+    anomaly_score: float = 0.0
+    behaviour_score: float = 0.0
+    confidence_score: float = 0.0
+    behaviour_embedding: list[float] = Field(default_factory=list)
+    event_types: list[str] = Field(default_factory=list)
+    per_event_errors: list[float] = Field(default_factory=list)
+    attention_weights: list[list[float]] = Field(default_factory=list)
+    attention_available: bool = True
+    top_suspicious_events: list[SuspiciousEventOut] = Field(default_factory=list)
+    model: str = "behaviour_transformer"
+
+
+class MitreMappingOut(BaseModel):
+    """MITRE ATT&CK mapping for a classified attack."""
+
+    attack_type: str
+    tactic_id: str
+    tactic_name: str
+    technique_id: str
+    technique_name: str
+    description: str
 
 
 class RiskAssessmentOut(BaseModel):
@@ -114,6 +152,8 @@ class PredictResponse(BaseModel):
         ...,
         description="Final SOC status: Normal | Suspicious | Confirmed Threat",
     )
+    behaviour_insight: BehaviourInsightOut | None = None
+    mitre: MitreMappingOut | None = None
 
 
 class PredictBatchResponse(BaseModel):

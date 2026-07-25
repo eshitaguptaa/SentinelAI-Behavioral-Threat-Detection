@@ -5,7 +5,11 @@ export type RiskLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type BackendStatus = "online" | "offline" | "checking";
 
 /** Final SOC status — derived on the backend from risk_level + attack_type. */
-export type FinalStatus = "Normal" | "Suspicious" | "Confirmed Threat";
+export type FinalStatus =
+  | "Normal"
+  | "Suspicious"
+  | "Under Investigation"
+  | "Confirmed Threat";
 
 export type AttackType =
   | "Impossible Travel"
@@ -33,7 +37,8 @@ export interface HealthStatus {
 export interface FeatureVectorPayload {
   employee_id: string;
   simulation_day: string;
-  [key: string]: string | number | null | undefined;
+  event_sequence?: string[];
+  [key: string]: string | number | string[] | null | undefined;
 }
 
 export interface AnomalyPrediction {
@@ -43,6 +48,38 @@ export interface AnomalyPrediction {
   normalized_score: number;
   prediction: number;
   is_anomaly: boolean;
+}
+
+export interface SuspiciousEvent {
+  index: number;
+  event_type: string;
+  reconstruction_error: number;
+  attention_mass: number;
+  explanation?: string;
+}
+
+export interface BehaviourInsight {
+  session_id: string;
+  reconstruction_error: number;
+  anomaly_score: number;
+  behaviour_score: number;
+  confidence_score: number;
+  behaviour_embedding: number[];
+  event_types: string[];
+  per_event_errors: number[];
+  attention_weights: number[][];
+  attention_available?: boolean;
+  top_suspicious_events: SuspiciousEvent[];
+  model: string;
+}
+
+export interface MitreMapping {
+  attack_type: string;
+  tactic_id: string;
+  tactic_name: string;
+  technique_id: string;
+  technique_name: string;
+  description: string;
 }
 
 export interface RiskAssessment {
@@ -81,6 +118,8 @@ export interface PredictResult {
   explanation: RiskExplanation;
   /** Backend-derived final status — never compute this in the UI. */
   status: FinalStatus | string;
+  behaviour_insight?: BehaviourInsight | null;
+  mitre?: MitreMapping | null;
 }
 
 export interface PredictBatchResponse {
@@ -117,6 +156,7 @@ export const RISK_COLORS: Record<string, string> = {
 export const STATUS_COLORS: Record<string, string> = {
   Normal: "#3dba7a",
   Suspicious: "#e4c35a",
+  "Under Investigation": "#e08a3c",
   "Confirmed Threat": "#e24b4b",
 };
 

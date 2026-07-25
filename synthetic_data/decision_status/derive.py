@@ -1,7 +1,7 @@
 """Single decision hierarchy for SentinelAI final status.
 
-Status is derived ONLY from ``risk_level`` and ``attack_type``.
-It must never be taken from Isolation Forest ``is_anomaly`` alone.
+Status is derived from ``risk_level`` AND ``attack_type``.
+``Normal Activity`` is never promoted to ``Confirmed Threat``.
 """
 
 from __future__ import annotations
@@ -17,29 +17,28 @@ def derive_final_status(risk_level: str, attack_type: str) -> str:
 
     Hierarchy (deterministic)::
 
-        HIGH / CRITICAL           → Confirmed Threat
-        MEDIUM                    → Suspicious
-        LOW + Normal Activity     → Normal
-        LOW + any other attack    → Suspicious
+        Normal Activity + LOW       → Normal
+        Normal Activity + MEDIUM    → Suspicious
+        Normal Activity + HIGH/CRIT → Under Investigation
+        Other attack + MEDIUM       → Suspicious
+        Other attack + HIGH/CRIT    → Confirmed Threat
+        Other attack + LOW          → Suspicious
 
-    Args:
-        risk_level: ``LOW`` / ``MEDIUM`` / ``HIGH`` / ``CRITICAL``.
-        attack_type: Attack classification label (e.g. ``Brute Force``).
-
-    Returns:
-        One of ``Normal``, ``Suspicious``, ``Confirmed Threat``.
+    ``Normal Activity`` never yields ``Confirmed Threat``.
     """
     level = (risk_level or "").strip().upper()
     attack = (attack_type or "").strip()
+    is_normal = attack == NORMAL_ATTACK_TYPE or attack == ""
 
+    if is_normal:
+        if level == "LOW":
+            return FinalStatus.NORMAL.value
+        if level == "MEDIUM":
+            return FinalStatus.SUSPICIOUS.value
+        # HIGH / CRITICAL / unknown elevated → investigate, never confirm
+        return FinalStatus.UNDER_INVESTIGATION.value
+
+    # Known attack pattern labelled by the rule-based classifier
     if level in {"HIGH", "CRITICAL"}:
         return FinalStatus.CONFIRMED_THREAT.value
-
-    if level == "MEDIUM":
-        # Medium risk is always abnormal enough for SOC review.
-        return FinalStatus.SUSPICIOUS.value
-
-    # LOW (and any unexpected band treated as LOW-safe path)
-    if attack == NORMAL_ATTACK_TYPE or attack == "":
-        return FinalStatus.NORMAL.value
     return FinalStatus.SUSPICIOUS.value

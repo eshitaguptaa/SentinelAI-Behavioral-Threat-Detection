@@ -40,7 +40,7 @@ class TimelineEventLike(Protocol):
     metadata: dict[str, Any]
 
 
-# Mirrors synthetic_data.generators.event_factory constants (kept local).
+# Mirrors synthetic_data.generators.event_catalog constants (kept local).
 DEVICE_CONNECT = "DEVICE_CONNECT"
 LOGIN = "LOGIN"
 VPN_CONNECT = "VPN_CONNECT"
@@ -50,8 +50,15 @@ RESOURCE_ACCESS = "RESOURCE_ACCESS"
 EMAIL_ACCESS = "EMAIL_ACCESS"
 MEETING_JOIN = "MEETING_JOIN"
 FILE_ACCESS = "FILE_ACCESS"
+FILE_READ = "FILE_READ"
+FILE_WRITE = "FILE_WRITE"
+FILE_DOWNLOAD = "FILE_DOWNLOAD"
 BREAK_START = "BREAK_START"
 LOGOUT = "LOGOUT"
+FAILED_LOGIN = "FAILED_LOGIN"
+ADMIN_LOGIN = "ADMIN_LOGIN"
+SSH_LOGIN = "SSH_LOGIN"
+USB_INSERT = "USB_INSERT"
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -83,9 +90,55 @@ _ATTACK_TYPE_KEYS: tuple[tuple[str, str], ...] = (
     ("BRUTE_FORCE_LOGIN", "brute_force_count"),
 )
 
-_AUTH_EVENT_TYPES: frozenset[str] = frozenset({LOGIN, LOGOUT, VPN_CONNECT, VPN_DISCONNECT})
+_AUTH_EVENT_TYPES: frozenset[str] = frozenset(
+    {
+        LOGIN,
+        LOGOUT,
+        FAILED_LOGIN,
+        ADMIN_LOGIN,
+        VPN_CONNECT,
+        VPN_DISCONNECT,
+        "PASSWORD_CHANGE",
+        "MFA_SUCCESS",
+        "MFA_FAILURE",
+    }
+)
 _RESOURCE_TOUCH_TYPES: frozenset[str] = frozenset(
-    {APPLICATION_ACCESS, RESOURCE_ACCESS, FILE_ACCESS, EMAIL_ACCESS}
+    {
+        APPLICATION_ACCESS,
+        RESOURCE_ACCESS,
+        FILE_ACCESS,
+        FILE_READ,
+        FILE_WRITE,
+        FILE_DOWNLOAD,
+        "FILE_DELETE",
+        "FILE_UPLOAD",
+        EMAIL_ACCESS,
+        "SLACK_ACCESS",
+        "TEAMS_ACCESS",
+        MEETING_JOIN,
+        "GITHUB_ACCESS",
+        "GIT_PULL",
+        "GIT_PUSH",
+        "JIRA_ACCESS",
+        "DOCKER_ACCESS",
+        "AWS_CONSOLE",
+        "AZURE_PORTAL",
+        "DATABASE_ACCESS",
+        SSH_LOGIN,
+        "REMOTE_DESKTOP",
+        "API_REQUEST",
+        "CRM_ACCESS",
+        "ANALYTICS_ACCESS",
+        "CANVA_ACCESS",
+        "PAYROLL_ACCESS",
+        "EXCEL_ACCESS",
+        "HR_RECORDS_ACCESS",
+        "DOCUMENT_ACCESS",
+        ADMIN_LOGIN,
+        "PRIVILEGE_ESCALATION",
+        "POLICY_CHANGE",
+    }
 )
 _FAILURE_RESULTS: frozenset[str] = frozenset(
     {"failure", "fail", "failed", "denied", "error"}
@@ -475,7 +528,13 @@ class FileActivityExtractor:
             if "Mass Download" in stage or "mass_download" in stage.lower():
                 mass += 1
 
-            if event.event_type == FILE_ACCESS:
+            if event.event_type == FILE_ACCESS or event.event_type in {
+                FILE_READ,
+                FILE_WRITE,
+                FILE_DOWNLOAD,
+                "FILE_DELETE",
+                "FILE_UPLOAD",
+            }:
                 file_access += 1
 
         ratio = (file_access / total) if total else 0.0

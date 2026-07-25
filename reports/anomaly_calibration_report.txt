@@ -1,0 +1,28 @@
+================================================================
+SentinelAI anomaly calibration report (normal sessions)
+================================================================
+
+Normal reconstruction-error distribution
+  n_samples : 2134
+  mean      : 1.640379
+  std       : 0.489815
+  min       : 0.529680
+  max       : 3.056562
+  p80       : 2.107956
+  p90       : 2.287523
+  p95       : 2.419278
+  p99       : 2.663371
+
+Score thresholds (error -> risk band)
+  LOW      : error <= p80 (2.107956) -> score 0-24
+  MEDIUM   : p80-p90                 -> score 25-49
+  HIGH     : p90-p95                 -> score 50-74
+  CRITICAL : error > p95 (2.419278) -> score 75-100
+  (CRITICAL ~= top 5% of normal calibration mass)
+
+Sessions by anomaly band (this evaluation set)
+  LOW      :  1707  ( 80.0%)
+  MEDIUM   :   213  ( 10.0%)
+  HIGH     :   107  (  5.0%)
+  CRITICAL :   107  (  5.0%)
+================================================================

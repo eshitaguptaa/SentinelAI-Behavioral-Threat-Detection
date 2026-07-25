@@ -26,13 +26,23 @@ class ApiValidationError(ValueError):
         self.code = code
 
 
-def build_feature_vector(payload: FeatureVectorPayload | Mapping[str, Any]) -> FeatureVector:
+def build_feature_vector(
+    payload: FeatureVectorPayload | Mapping[str, Any],
+) -> FeatureVector:
     """Construct a Phase 8 ``FeatureVector`` from a request payload.
 
     Unknown keys are ignored. Missing optional columns use dataclass defaults.
     Attack ground-truth columns may be present in the payload but are never
     used by Isolation Forest (``ml_features()`` excludes them).
     """
+    vector, _sequence = build_feature_vector_with_sequence(payload)
+    return vector
+
+
+def build_feature_vector_with_sequence(
+    payload: FeatureVectorPayload | Mapping[str, Any],
+) -> tuple[FeatureVector, list[str] | None]:
+    """Build a feature vector and optional explicit event sequence."""
     raw = (
         feature_payload_to_dict(payload)
         if isinstance(payload, FeatureVectorPayload)
@@ -57,7 +67,7 @@ def build_feature_vector(payload: FeatureVectorPayload | Mapping[str, Any]) -> F
         "simulation_day": simulation_day.strip(),
     }
     for name, value in raw.items():
-        if name in {"employee_id", "simulation_day"}:
+        if name in {"employee_id", "simulation_day", "event_sequence"}:
             continue
         if name not in _FEATURE_FIELD_NAMES:
             continue
@@ -76,7 +86,11 @@ def build_feature_vector(payload: FeatureVectorPayload | Mapping[str, Any]) -> F
             code="invalid_feature_vector",
         ) from exc
 
-    # Ensure behavioural map is usable for the pipeline.
+    event_sequence: list[str] | None = None
+    raw_sequence = raw.get("event_sequence")
+    if isinstance(raw_sequence, list) and raw_sequence:
+        event_sequence = [str(item) for item in raw_sequence]
+
     try:
         features = vector.ml_features()
     except Exception as exc:  # noqa: BLE001 — surface as validation error
@@ -89,29 +103,43 @@ def build_feature_vector(payload: FeatureVectorPayload | Mapping[str, Any]) -> F
             "feature_vector produced an empty behavioural feature map",
             code="invalid_feature_vector",
         )
-    return vector
+    return vector, event_sequence
 
 
 def build_feature_vectors(
     payloads: Sequence[FeatureVectorPayload | Mapping[str, Any]],
 ) -> list[FeatureVector]:
     """Convert a batch of payloads; reject empty batches."""
+    vectors, _sequences = build_feature_vectors_with_sequences(payloads)
+    return vectors
+
+
+def build_feature_vectors_with_sequences(
+    payloads: Sequence[FeatureVectorPayload | Mapping[str, Any]],
+) -> tuple[list[FeatureVector], list[list[str] | None]]:
+    """Convert a batch of payloads into vectors + optional sequences."""
     if not payloads:
         raise ApiValidationError(
             "feature_vectors must not be empty",
             code="empty_batch",
         )
-    return [build_feature_vector(payload) for payload in payloads]
+    vectors: list[FeatureVector] = []
+    sequences: list[list[str] | None] = []
+    for payload in payloads:
+        vector, sequence = build_feature_vector_with_sequence(payload)
+        vectors.append(vector)
+        sequences.append(sequence)
+    return vectors, sequences
 
 
 def require_fitted_model(model: Any) -> Any:
-    """Raise HTTP 503 when the Isolation Forest model is unavailable."""
+    """Raise HTTP 503 when the anomaly detection model is unavailable."""
     if model is None or not getattr(model, "is_fitted", False):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=(
-                "Isolation Forest model is not loaded. Set SENTINELAI_MODEL_PATH "
-                "to a fitted model file produced by Phase 9 save_model()."
+                "Anomaly detection model is not loaded. Set SENTINELAI_MODEL_PATH "
+                "to a fitted Transformer (.pt) or Isolation Forest (.joblib) artifact."
             ),
         )
     return model

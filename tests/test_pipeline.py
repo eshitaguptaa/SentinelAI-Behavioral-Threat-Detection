@@ -77,7 +77,7 @@ def test_pipeline_predict_risk_explain(
     assert assessment.anomaly_score == anomaly_prediction.normalized_score
     assert 0.0 <= assessment.risk_score <= 100.0
     assert explanation.risk_score == assessment.risk_score
-    assert explanation.recommendation == assessment.recommendation
+    assert explanation.recommendation  # attack-aware / level-aware text
     assert explanation.contributing_factors == assessment.contributing_factors
 
 

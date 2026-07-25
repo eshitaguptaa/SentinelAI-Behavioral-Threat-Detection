@@ -96,6 +96,18 @@
   gap: 0.85rem;
 }
 
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.stack {
+  display: grid;
+  gap: 0.85rem;
+}
+
 .section {
   margin-bottom: 1rem;
   scroll-margin-top: 1rem;
@@ -180,6 +192,10 @@
 @media (max-width: 1100px) {
   .cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .split {
+    grid-template-columns: 1fr;
   }
 }
 

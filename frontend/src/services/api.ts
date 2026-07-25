@@ -1,3 +1,5 @@
+import demoFeatureVectors from "../data/demoFeatureVectors.json";
+
 import axios, { AxiosError } from "axios";
 
 import type {
@@ -79,40 +81,64 @@ export async function predictBatch(
   return data.results;
 }
 
+type DemoKind = "normal" | "mild_anomaly" | "confirmed_attack";
+
+type DemoVectorRecord = FeatureVectorPayload & {
+  demo_kind?: DemoKind;
+  attack_scenario?: string;
+};
+
 /**
- * Deterministic demo feature vectors for SOC walkthroughs when no live
- * simulation export is wired yet. Values vary by employee index.
+ * Enterprise-realistic demo vectors for the SOC dashboard.
+ *
+ * Mix (~24 users): ~75% normal, ~10% mild behavioural anomalies (no attack
+ * rule), ~15% confirmed attacks. Normal sessions are sampled from the same
+ * ``events.csv`` distribution used to train the Transformer — no attack
+ * features are injected into normal rows.
+ *
+ * Source of truth: ``synthetic_data/demo/session_generator.py``
+ * (regenerate JSON via ``scripts/export_and_audit_demo.py``).
  */
 export function buildDemoFeatureVectors(
   count = 24,
   simulationDay = "2026-03-10",
 ): FeatureVectorPayload[] {
-  const vectors: FeatureVectorPayload[] = [];
-  for (let i = 0; i < count; i += 1) {
-    const tier = i % 5;
-    vectors.push({
-      employee_id: `EMP-${String(i + 1).padStart(3, "0")}`,
-      simulation_day: simulationDay,
-      total_events: 18 + (i % 12) * 3,
-      login_count: tier === 3 ? 14 : 1 + (i % 3),
-      logout_count: 1 + (i % 2),
-      auth_failure_rate: tier === 4 ? 0.55 : tier === 3 ? 0.28 : 0.02 * (i % 4),
-      max_failed_login_streak: tier === 4 ? 8 : tier === 3 ? 4 : i % 2,
-      country_change_count: tier === 2 ? 2 + (i % 2) : tier >= 3 ? 1 : 0,
-      location_change_count: tier === 1 ? 5 : 1 + (i % 5),
-      unique_device_count: tier === 0 && i > 10 ? 4 : 1 + (i % 3),
-      unique_location_count: tier === 1 ? 4 : 1 + (i % 3),
-      resource_entropy: tier >= 3 ? 2.4 : 0.4 + (i % 5) * 0.2,
-      device_entropy: tier === 0 && i > 10 ? 1.3 : 0.2 + (i % 4) * 0.15,
-      after_hours_event_count: tier === 4 ? 14 : i % 4,
-      download_size_mb_sum: tier === 4 ? 180 : tier === 3 ? 70 : 5 + i,
-      mass_download_event_count: tier === 4 ? 2 : 0,
-      vpn_usage_ratio: i % 7 === 0 ? 0.72 : 0.1 + (i % 5) * 0.05,
-      burst_max_5min: tier >= 3 ? 22 + (i % 10) : 4 + (i % 6),
-      active_duration_hours: tier === 4 ? 13 : 7 + (i % 5),
-      file_access_ratio: tier === 4 ? 0.55 : 0.15 + (i % 5) * 0.05,
-      night_event_count: tier >= 3 ? 6 : i % 3,
-    });
+  const source = demoFeatureVectors as DemoVectorRecord[];
+  if (!Array.isArray(source) || source.length === 0) {
+    throw new Error(
+      "demoFeatureVectors.json is empty. Run scripts/export_and_audit_demo.py",
+    );
   }
-  return vectors;
+
+  const normals = source.filter((row) => row.demo_kind === "normal");
+  const mild = source.filter((row) => row.demo_kind === "mild_anomaly");
+  const attacks = source.filter((row) => row.demo_kind === "confirmed_attack");
+
+  const nAttack = Math.max(1, Math.round(count * 0.15));
+  const nMild = Math.max(1, Math.round(count * 0.1));
+  const nNormal = Math.max(1, count - nAttack - nMild);
+
+  const pick = (pool: DemoVectorRecord[], n: number, offset: number) => {
+    const out: DemoVectorRecord[] = [];
+    for (let i = 0; i < n; i += 1) {
+      out.push(pool[(offset + i) % pool.length] ?? pool[0]);
+    }
+    return out;
+  };
+
+  const selected = [
+    ...pick(normals.length ? normals : source, nNormal, 0),
+    ...pick(mild.length ? mild : source, nMild, 3),
+    ...pick(attacks.length ? attacks : source, nAttack, 7),
+  ].slice(0, count);
+
+  return selected.map((row, index) => {
+    const { demo_kind: _kind, attack_scenario: _scenario, ...rest } = row;
+    return {
+      ...rest,
+      employee_id: `EMP-${String(index + 1).padStart(3, "0")}`,
+      simulation_day: simulationDay,
+      event_sequence: [...(row.event_sequence ?? [])],
+    };
+  });
 }

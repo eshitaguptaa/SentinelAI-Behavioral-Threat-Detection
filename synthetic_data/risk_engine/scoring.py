@@ -52,10 +52,14 @@ def map_risk_level(risk_score: float) -> RiskLevel:
 
 
 def recommendation_for_level(level: RiskLevel | str) -> str:
-    """Return the deterministic SOC recommendation for a risk level."""
+    """Return a level-based recommendation (prefer attack-aware helpers in API)."""
+    from synthetic_data.risk_engine.recommendations import recommendation_for_attack
+
     if isinstance(level, str):
-        level = RiskLevel(level)
-    return _RECOMMENDATIONS[level]
+        level_key = level
+    else:
+        level_key = level.value
+    return recommendation_for_attack("Normal Activity", risk_level=level_key)
 
 
 def risk_level_value(level: RiskLevel) -> str:

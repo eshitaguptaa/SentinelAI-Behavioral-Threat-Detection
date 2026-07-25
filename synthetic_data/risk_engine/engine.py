@@ -68,6 +68,9 @@ class RiskEngine:
         behavioural = feature_vector.ml_features()
 
         adjustment, rule_factors = apply_behavioural_rules(behavioural)
+        # Bound rule uplift so mild Transformer scores are not pushed straight
+        # into CRITICAL by stacked heuristics alone.
+        adjustment = min(float(adjustment), 20.0)
         risk_score = clamp_score(anomaly_score + adjustment)
         level = map_risk_level(risk_score)
 

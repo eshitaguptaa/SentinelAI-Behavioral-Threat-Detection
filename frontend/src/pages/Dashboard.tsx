@@ -6,10 +6,13 @@ import {
   type ReactNode,
 } from "react";
 
+import AttentionHeatmap from "../components/AttentionHeatmap";
+import BehaviourTimeline from "../components/BehaviourTimeline";
 import EmployeeTable from "../components/EmployeeTable";
 import ExplanationPanel from "../components/ExplanationPanel";
 import Header from "../components/Header";
 import RiskChart from "../components/RiskChart";
+import RiskTrend from "../components/RiskTrend";
 import Sidebar, { type SidebarSection } from "../components/Sidebar";
 import StatsCard from "../components/StatsCard";
 import {
@@ -167,8 +170,8 @@ export default function Dashboard() {
             <div>
               <h2 className={styles.pageTitle}>Security Operations Overview</h2>
               <p className={styles.pageCaption}>
-                Live inference via {getApiBaseUrl()} · Isolation Forest → Risk →
-                Explainability
+                Live inference via {getApiBaseUrl()} · Transformer → Risk →
+                Attack Classification → Explainability
               </p>
             </div>
             <div className={styles.actions}>
@@ -234,7 +237,10 @@ export default function Dashboard() {
           </Section>
 
           <Section id="risk">
-            <RiskChart data={distribution} />
+            <div className={styles.split}>
+              <RiskChart data={distribution} />
+              <RiskTrend rows={rows} />
+            </div>
           </Section>
 
           <Section id="predictions">
@@ -246,7 +252,17 @@ export default function Dashboard() {
           </Section>
 
           <Section id="explainability">
-            <ExplanationPanel result={selectedResult} />
+            <div className={styles.split}>
+              <ExplanationPanel result={selectedResult} />
+              <div className={styles.stack}>
+                <BehaviourTimeline
+                  insight={selectedResult?.behaviour_insight}
+                />
+                <AttentionHeatmap
+                  insight={selectedResult?.behaviour_insight}
+                />
+              </div>
+            </div>
           </Section>
 
           <Section id="system">

@@ -1,7 +1,7 @@
 """Deterministic summary and observation builders for explainability.
 
-Produces SOC-friendly text from risk level and behavioural features only.
-Does not modify risk scores and does not read attack ground truth.
+Produces evidence-based SOC narratives from risk level, attack type, and
+behavioural features. Does not modify risk scores.
 """
 
 from __future__ import annotations
@@ -9,24 +9,84 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import Final
 
+from synthetic_data.decision_status.schema import NORMAL_ATTACK_TYPE
+
 BehaviourFeatures = Mapping[str, float]
 
-_SUMMARIES: Final[dict[str, str]] = {
-    "LOW": "Employee behaviour appears consistent with historical patterns.",
-    "MEDIUM": "Behaviour shows moderate deviations requiring review.",
-    "HIGH": "Behaviour indicates elevated security risk.",
-    "CRITICAL": "Behaviour strongly suggests potentially malicious activity.",
+_ATTACK_SUMMARIES: Final[dict[str, str]] = {
+    "Brute Force": "High failed-login ratio consistent with brute-force authentication attacks.",
+    "Credential Stuffing": (
+        "Multiple failed logins followed by successful authentication, "
+        "consistent with credential stuffing."
+    ),
+    "Impossible Travel": (
+        "Logins from geographically impossible locations within the observed window."
+    ),
+    "Lateral Movement": (
+        "Multiple hosts or remote services accessed within a short time, "
+        "consistent with lateral movement."
+    ),
+    "Device Spoofing": "Activity from an unknown or untrusted device fingerprint.",
+    "Insider Activity": (
+        "Sensitive reads followed by removable-media or bulk transfer signals."
+    ),
+    "Mass Download": "Abnormally large file download volume for this employee baseline.",
+    "Suspicious VPN Usage": (
+        "VPN usage patterns inconsistent with the employee's normal access posture."
+    ),
 }
 
-# Fallback when an unexpected level string appears (should not happen in prod).
-_DEFAULT_SUMMARY: Final[str] = (
-    "Employee activity significantly deviates from normal behavioural patterns."
-)
+_NORMAL_SUMMARIES: Final[dict[str, str]] = {
+    "LOW": (
+        "No known attack pattern was detected. Behaviour is consistent with "
+        "the employee's historical patterns."
+    ),
+    "MEDIUM": (
+        "No known attack pattern was detected. The Transformer observed "
+        "moderate deviation from the employee's historical behaviour."
+    ),
+    "HIGH": (
+        "No known attack pattern was detected. The Transformer observed "
+        "elevated deviation from the employee's historical behaviour; "
+        "manual review is recommended."
+    ),
+    "CRITICAL": (
+        "No known attack pattern was detected, but reconstruction error is "
+        "extreme relative to the employee's baseline. Treat as under "
+        "investigation until confirmed."
+    ),
+}
+
+
+def summary_for_detection(
+    *,
+    risk_level: str,
+    attack_type: str,
+    matched_signals: Sequence[str] | None = None,
+) -> str:
+    """Build an evidence-based summary for the SOC panel."""
+    attack = (attack_type or "").strip() or NORMAL_ATTACK_TYPE
+    level = (risk_level or "LOW").strip().upper()
+
+    if attack != NORMAL_ATTACK_TYPE:
+        base = _ATTACK_SUMMARIES.get(
+            attack,
+            f"Behavioural evidence supports classification as {attack}.",
+        )
+        signals = [s for s in (matched_signals or []) if s]
+        if signals:
+            return f"{base} Evidence: {'; '.join(signals[:3])}."
+        return base
+
+    return _NORMAL_SUMMARIES.get(level, _NORMAL_SUMMARIES["MEDIUM"])
 
 
 def summary_for_risk_level(risk_level: str) -> str:
-    """Return the deterministic summary text for a risk level."""
-    return _SUMMARIES.get(risk_level, _DEFAULT_SUMMARY)
+    """Backward-compatible summary when attack type is unavailable."""
+    return summary_for_detection(
+        risk_level=risk_level,
+        attack_type=NORMAL_ATTACK_TYPE,
+    )
 
 
 def _f(features: BehaviourFeatures, name: str, default: float = 0.0) -> float:
@@ -38,123 +98,108 @@ def _f(features: BehaviourFeatures, name: str, default: float = 0.0) -> float:
         return default
 
 
-# ---------------------------------------------------------------------------
-# Observation builders (behavioural features only)
-# ---------------------------------------------------------------------------
-
-
 def observe_auth_failure_rate(features: BehaviourFeatures) -> str | None:
-    """High authentication failure rate."""
     rate = _f(features, "auth_failure_rate")
     if rate >= 0.50:
-        return "Authentication failure rate is unusually high."
+        return f"Authentication failure rate is {rate:.0%} (unusually high)."
     if rate >= 0.25:
-        return "Authentication failure rate is elevated."
+        return f"Authentication failure rate is elevated ({rate:.0%})."
     return None
 
 
 def observe_failed_logins(features: BehaviourFeatures) -> str | None:
-    """Repeated / multiple failed login attempts."""
     streak = _f(features, "max_failed_login_streak")
     if streak >= 5:
-        return "Multiple failed login attempts detected."
+        return f"Failed-login streak of {int(streak)} attempts detected."
     if streak >= 3:
-        return "Repeated failed logins detected."
+        return f"Repeated failed logins (streak={int(streak)})."
     return None
 
 
 def observe_country_changes(features: BehaviourFeatures) -> str | None:
-    """Cross-country access patterns."""
     changes = _f(features, "country_change_count")
     if changes >= 2:
-        return "Access originated from several countries."
+        return f"Access originated from {int(changes)} country changes."
     if changes >= 1:
         return "A country change was observed during the day."
     return None
 
 
 def observe_locations(features: BehaviourFeatures) -> str | None:
-    """Multiple locations accessed."""
     unique = _f(features, "unique_location_count")
     changes = _f(features, "location_change_count")
     if unique >= 3 or changes >= 4:
-        return "Multiple locations accessed."
+        return (
+            f"Multiple locations accessed "
+            f"(unique={int(unique)}, changes={int(changes)})."
+        )
     return None
 
 
 def observe_resource_diversity(features: BehaviourFeatures) -> str | None:
-    """High resource diversity."""
     entropy = _f(features, "resource_entropy")
     if entropy >= 2.0:
-        return "Resource access diversity exceeded normal behaviour."
+        return f"Resource access entropy elevated ({entropy:.2f})."
     return None
 
 
 def observe_device_diversity(features: BehaviourFeatures) -> str | None:
-    """High device diversity."""
     entropy = _f(features, "device_entropy")
     unique = _f(features, "unique_device_count")
     if entropy >= 1.0 or unique >= 3:
-        return "High device diversity observed."
+        return f"High device diversity (devices={int(unique)}, entropy={entropy:.2f})."
     return None
 
 
 def observe_download_activity(features: BehaviourFeatures) -> str | None:
-    """Large download / mass-download activity."""
     mb = _f(features, "download_size_mb_sum")
     mass = _f(features, "mass_download_event_count")
     if mb >= 100.0 or mass >= 1:
-        return "Large download activity detected."
+        return f"Large download activity detected ({mb:.0f} MB)."
     if mb >= 50.0:
-        return "Elevated download volume detected."
+        return f"Elevated download volume ({mb:.0f} MB)."
     return None
 
 
 def observe_after_hours(features: BehaviourFeatures) -> str | None:
-    """Excessive after-hours activity."""
     count = _f(features, "after_hours_event_count")
     if count >= 10:
-        return "Excessive after-hours activity detected."
+        return f"Excessive after-hours activity ({int(count)} events)."
     if count >= 5:
-        return "After-hours activity is elevated."
+        return f"After-hours activity is elevated ({int(count)} events)."
     return None
 
 
 def observe_active_duration(features: BehaviourFeatures) -> str | None:
-    """Extended active duration."""
     hours = _f(features, "active_duration_hours")
     if hours >= 12.0:
-        return "Extended active duration observed."
+        return f"Extended active duration ({hours:.1f}h)."
     return None
 
 
 def observe_vpn_usage(features: BehaviourFeatures) -> str | None:
-    """High VPN usage share."""
     ratio = _f(features, "vpn_usage_ratio")
     if ratio >= 0.60:
-        return "High VPN usage observed."
+        return f"High VPN usage share ({ratio:.0%})."
     return None
 
 
 def observe_activity_burst(features: BehaviourFeatures) -> str | None:
-    """Short-window activity burst."""
     burst = _f(features, "burst_max_5min")
     if burst >= 20:
-        return "Activity burst detected."
+        return f"Activity burst detected (max {int(burst)} events / 5 min)."
     return None
 
 
 def observe_file_access(features: BehaviourFeatures) -> str | None:
-    """File-access-heavy day."""
     ratio = _f(features, "file_access_ratio")
     if ratio >= 0.60:
-        return "File access dominates the day's activity."
+        return f"File access dominates the day ({ratio:.0%} of activity)."
     return None
 
 
 ObservationBuilder = Callable[[BehaviourFeatures], str | None]
 
-# Deterministic observation pipeline order.
 OBSERVATION_BUILDERS: tuple[ObservationBuilder, ...] = (
     observe_auth_failure_rate,
     observe_failed_logins,
@@ -176,11 +221,7 @@ def build_observations(
     *,
     builders: Sequence[ObservationBuilder] | None = None,
 ) -> list[str]:
-    """Build ordered, de-duplicated behavioural observations.
-
-    Only observations supported by the provided behavioural feature map are
-    emitted. Empty when no behavioural thresholds are met.
-    """
+    """Build ordered, de-duplicated behavioural observations."""
     pipeline = builders if builders is not None else OBSERVATION_BUILDERS
     observations: list[str] = []
     seen: set[str] = set()
