@@ -201,17 +201,12 @@ def _run_pipeline(
     vector: FeatureVector,
     event_sequence: list[str] | None = None,
 ) -> PredictResponse:
-    """Execute Detector → Risk → Attack → Status → Explainability."""
+    """Execute Detector → Attack → Risk → Status → Explainability.
+
+    Attack classification runs before risk fusion so rule severity can feed
+    the weighted risk score. Response schema is unchanged.
+    """
     prediction = _predict_vector(model, vector, event_sequence)
-    assessment = assess_risk(prediction, vector)
-    attack = classify_attack(vector)
-    final_status = derive_final_status(assessment.risk_level, attack.attack_type)
-    explanation = explain_risk(
-        assessment,
-        vector,
-        attack_type=attack.attack_type,
-        matched_signals=attack.matched_signals,
-    )
 
     insight: dict[str, Any] | None = None
     if getattr(model, "detector_kind", None) == "transformer" and hasattr(
@@ -220,6 +215,42 @@ def _run_pipeline(
         raw_insight = model.get_insight(vector.employee_id, vector.simulation_day)
         if isinstance(raw_insight, dict):
             insight = raw_insight
+
+    attack = classify_attack(
+        vector,
+        anomaly_score=float(prediction.normalized_score),
+    )
+    model_confidence = None
+    if insight and insight.get("confidence_score") is not None:
+        model_confidence = float(insight["confidence_score"])
+
+    assessment = assess_risk(
+        prediction,
+        vector,
+        attack_confidence=float(attack.attack_confidence),
+        model_confidence=model_confidence,
+    )
+
+    confidence_for_status = (
+        model_confidence
+        if model_confidence is not None
+        else float(attack.attack_confidence)
+    )
+    final_status = derive_final_status(
+        assessment.risk_score,
+        attack.attack_type,
+        confidence_for_status,
+    )
+
+    explanation = explain_risk(
+        assessment,
+        vector,
+        attack_type=attack.attack_type,
+        matched_signals=attack.matched_signals,
+        status=final_status,
+        confidence=confidence_for_status if confidence_for_status is not None else 0.5,
+        behaviour_insight=insight,
+    )
 
     return PredictResponse(
         prediction=_prediction_out(prediction),

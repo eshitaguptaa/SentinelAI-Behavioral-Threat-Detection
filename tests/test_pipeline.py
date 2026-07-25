@@ -67,8 +67,20 @@ def test_pipeline_predict_risk_explain(
 ) -> None:
     """Mocked IF → risk → explainability produces aligned identities."""
     prediction = mock_model.predict_one(feature_vector)
-    assessment = assess_risk(prediction, feature_vector)
-    explanation = explain(assessment, feature_vector)
+    assessment = assess_risk(
+        prediction,
+        feature_vector,
+        attack_confidence=0.88,
+        model_confidence=0.8,
+    )
+    explanation = explain(
+        assessment,
+        feature_vector,
+        attack_type="Impossible Travel",
+        matched_signals=["country_change_count=2"],
+        status="Confirmed Threat",
+        confidence=0.85,
+    )
 
     mock_model.predict_one.assert_called_once_with(feature_vector)
     assert prediction.employee_id == feature_vector.employee_id
@@ -77,17 +89,24 @@ def test_pipeline_predict_risk_explain(
     assert assessment.anomaly_score == anomaly_prediction.normalized_score
     assert 0.0 <= assessment.risk_score <= 100.0
     assert explanation.risk_score == assessment.risk_score
-    assert explanation.recommendation  # attack-aware / level-aware text
-    assert explanation.contributing_factors == assessment.contributing_factors
+    assert explanation.recommendation
+    assert explanation.contributing_factors  # Transformer findings
+    assert explanation.observations  # Rule findings
 
 
-def test_pipeline_risk_score_ge_anomaly(
+def test_pipeline_fused_risk_in_bounds(
     anomaly_prediction: AnomalyPrediction,
     feature_vector: FeatureVector,
 ) -> None:
-    """Behavioural uplifts must not decrease the anomaly starting score below itself when uplifts apply."""
-    assessment = assess_risk(anomaly_prediction, feature_vector)
-    assert assessment.risk_score >= assessment.anomaly_score
+    """Weighted fusion keeps risk in [0, 100] and distinct from raw anomaly."""
+    assessment = assess_risk(
+        anomaly_prediction,
+        feature_vector,
+        attack_confidence=0.88,
+        model_confidence=0.8,
+    )
+    assert 0.0 <= assessment.risk_score <= 100.0
+    assert assessment.risk_score != assessment.anomaly_score
 
 
 def test_pipeline_rejects_identity_mismatch(

@@ -40,6 +40,15 @@ _ATTACK_RECOMMENDATIONS: Final[dict[str, str]] = {
         "Review VPN session posture; verify tunnel endpoints; require "
         "re-authentication if the pattern persists."
     ),
+    "Behavioural Anomaly": (
+        "Investigate Transformer findings; compare the session timeline to "
+        "the employee's baseline; escalate if deviation persists."
+    ),
+    "Unknown Behaviour": (
+        "Review recent activity for unexplained deviation; continue "
+        "monitoring if no additional signals appear."
+    ),
+    "None": "Continue monitoring.",
     NORMAL_ATTACK_TYPE: "Continue monitoring.",
 }
 

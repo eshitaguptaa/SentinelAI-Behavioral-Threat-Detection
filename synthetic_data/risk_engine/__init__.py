@@ -20,6 +20,7 @@ Public API::
 """
 
 from synthetic_data.risk_engine.engine import RiskEngine, assess_risk, assess_risks
+from synthetic_data.risk_engine.config import DEFAULT_RISK_CONFIG, RiskEngineConfig
 from synthetic_data.risk_engine.schema import (
     FORBIDDEN_RISK_FIELDS,
     RiskAssessment,
@@ -33,9 +34,11 @@ from synthetic_data.risk_engine.scoring import (
 from synthetic_data.risk_engine.validation import RiskEngineError
 
 __all__ = [
+    "DEFAULT_RISK_CONFIG",
     "FORBIDDEN_RISK_FIELDS",
     "RiskAssessment",
     "RiskEngine",
+    "RiskEngineConfig",
     "RiskEngineError",
     "RiskLevel",
     "assess_risk",

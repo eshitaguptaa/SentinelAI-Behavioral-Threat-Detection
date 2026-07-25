@@ -111,17 +111,23 @@ def test_predict_route(
         "Under Investigation",
         "Confirmed Threat",
     }
-    # Status must follow hierarchy (not Isolation Forest is_anomaly alone).
-    if response.attack_classification.attack_type == "Normal Activity":
+    # Status follows SOC workflow: Confirmed Threat needs rule + risk>=80 + conf>=80.
+    assert response.attack_classification.attack_type != "Normal Activity"
+    if response.attack_classification.attack_type in {
+        "None",
+        "Behavioural Anomaly",
+        "Unknown Behaviour",
+    }:
         assert response.status != "Confirmed Threat"
-        if response.risk_assessment.risk_level in {"HIGH", "CRITICAL"}:
-            assert response.status == "Under Investigation"
-    elif response.risk_assessment.risk_level in {"HIGH", "CRITICAL"}:
-        assert response.status == "Confirmed Threat"
-    if (
-        response.risk_assessment.risk_level == "LOW"
-        and response.attack_classification.attack_type == "Normal Activity"
-    ):
+    if response.status == "Confirmed Threat":
+        assert response.attack_classification.attack_type not in {
+            "None",
+            "Behavioural Anomaly",
+            "Unknown Behaviour",
+            "Normal Activity",
+        }
+        assert response.risk_assessment.risk_score >= 80.0
+    if response.risk_assessment.risk_level == "LOW" and response.attack_classification.attack_type == "None":
         assert response.status == "Normal"
         assert response.attack_classification.attack_confidence == 0.0
 

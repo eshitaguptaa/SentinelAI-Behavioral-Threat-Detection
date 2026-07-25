@@ -122,7 +122,9 @@ def test_mitre_mapping_and_status_hierarchy() -> None:
     brute = mitre_dict("Brute Force")
     assert brute is not None
     assert brute["technique_id"] == "T1110"
-    assert derive_final_status("LOW", "Normal Activity") == "Normal"
-    assert derive_final_status("LOW", "Brute Force") == "Suspicious"
-    assert derive_final_status("HIGH", "Brute Force") == "Confirmed Threat"
-    assert derive_final_status("HIGH", "Normal Activity") == "Under Investigation"
+    assert derive_final_status(17.0, "None", 0.55) == "Normal"
+    assert derive_final_status(20.0, "Brute Force", 0.9) == "Normal"
+    assert derive_final_status(41.0, "Brute Force", 0.7) == "Suspicious"
+    assert derive_final_status(85.0, "Brute Force", 0.9) == "Confirmed Threat"
+    assert derive_final_status(85.0, "Behavioural Anomaly", 0.9) == "Under Investigation"
+    assert derive_final_status(85.0, "Brute Force", 0.57) == "Under Investigation"

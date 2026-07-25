@@ -22,6 +22,11 @@ class AttackType(str, Enum):
     INSIDER_ACTIVITY = "Insider Activity"
     MASS_DOWNLOAD = "Mass Download"
     SUSPICIOUS_VPN_USAGE = "Suspicious VPN Usage"
+    # Non-signature labels (no attack rule matched):
+    NONE = "None"
+    BEHAVIOURAL_ANOMALY = "Behavioural Anomaly"
+    UNKNOWN_BEHAVIOUR = "Unknown Behaviour"
+    # Legacy — retained for older fixtures; never emitted by the classifier.
     NORMAL_ACTIVITY = "Normal Activity"
 
 

@@ -141,7 +141,8 @@ function ExplanationPanel({ result }: ExplanationPanelProps) {
         <p>
           <strong>{attack_classification.attack_type}</strong>
           {" — "}
-          rule-based label from behavioural features (not ML).
+          signature rules when matched; otherwise None / Unknown Behaviour /
+          Behavioural Anomaly from the Transformer score.
         </p>
         {attack_classification.matched_signals.length === 0 ? (
           <p className={styles.muted}>No matched signals.</p>
@@ -160,9 +161,9 @@ function ExplanationPanel({ result }: ExplanationPanelProps) {
       </div>
 
       <div className={styles.block}>
-        <h3>Contributing Factors</h3>
+        <h3>Transformer Findings</h3>
         {explanation.contributing_factors.length === 0 ? (
-          <p className={styles.muted}>No contributing factors recorded.</p>
+          <p className={styles.muted}>No Transformer findings recorded.</p>
         ) : (
           <ul>
             {explanation.contributing_factors.map((factor) => (
@@ -173,9 +174,9 @@ function ExplanationPanel({ result }: ExplanationPanelProps) {
       </div>
 
       <div className={styles.block}>
-        <h3>Observations</h3>
+        <h3>Rule Findings</h3>
         {explanation.observations.length === 0 ? (
-          <p className={styles.muted}>No behavioural observations triggered.</p>
+          <p className={styles.muted}>No rule findings triggered.</p>
         ) : (
           <ul>
             {explanation.observations.map((observation) => (

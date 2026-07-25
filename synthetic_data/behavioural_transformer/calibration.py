@@ -148,24 +148,70 @@ def normalize_error(error: float, calibration: ErrorCalibration) -> float:
 
 
 def confidence_from_error(error: float, calibration: ErrorCalibration) -> float:
-    """Certainty: high when clearly below p80 or clearly above p95."""
+    """Model certainty from distance to the training error distribution.
+
+    Returns a value in ``[0, 1]`` (UI shows percent). Bands follow
+    ``RiskEngineConfig`` (imported lazily to avoid cycles)::
+
+        clearly normal (≤ mean)     → ~48–58%
+        near decision boundary      → ~45–60%
+        moderately anomalous        → ~60–80%
+        far outside (≫ p99)         → ~80–99%
+
+    Near-threshold sessions are intentionally *less* certain than extreme
+    outliers — Confirmed Threat requires high confidence.
+    """
+    from synthetic_data.risk_engine.config import DEFAULT_RISK_CONFIG
+
+    cfg = DEFAULT_RISK_CONFIG
     value = float(error)
+    mean = float(calibration.mean)
     p80 = float(calibration.p80)
     p95 = float(calibration.p95)
+    p99 = float(calibration.p99)
     sigma = max(float(calibration.std), 1e-8)
 
-    if value <= calibration.mean:
-        depth = (calibration.mean - value) / sigma
-        conf = 0.78 + 0.21 * math.tanh(depth / 1.2)
-    elif value <= p80:
-        conf = 0.70 + 0.08 * ((p80 - value) / max(p80 - calibration.mean, 1e-8))
-    elif value <= p95:
-        conf = 0.55 + 0.15 * ((value - p80) / max(p95 - p80, 1e-8))
-    else:
-        excess = (value - p95) / sigma
-        conf = 0.75 + 0.24 * math.tanh(excess / 1.5)
+    # Ensure ordered anchors.
+    if p80 <= mean:
+        p80 = mean + 0.5 * sigma
+    if p95 <= p80:
+        p95 = p80 + 0.5 * sigma
+    if p99 <= p95:
+        p99 = p95 + 0.5 * sigma
 
-    return float(np.clip(conf, 0.52, 0.99))
+    if value <= mean:
+        t = (mean - value) / max(3.0 * sigma, 1e-8)
+        t = float(np.clip(t, 0.0, 1.0))
+        # Deeper into the normal mass → slightly higher "routine" certainty,
+        # still in the calm mid band (not threat-grade).
+        conf = cfg.confidence_normal_ceiling - (
+            cfg.confidence_normal_ceiling - cfg.confidence_normal_floor
+        ) * (1.0 - t)
+    elif value <= p80:
+        t = (value - mean) / max(p80 - mean, 1e-8)
+        conf = cfg.confidence_normal_ceiling + (
+            cfg.confidence_near_floor - cfg.confidence_normal_ceiling
+        ) * t
+    elif value <= p95:
+        # Near reconstruction / decision threshold → 45–60%.
+        t = (value - p80) / max(p95 - p80, 1e-8)
+        conf = cfg.confidence_near_floor + (
+            cfg.confidence_near_ceiling - cfg.confidence_near_floor
+        ) * t
+    elif value <= p99:
+        # Moderately anomalous → 60–80%.
+        t = (value - p95) / max(p99 - p95, 1e-8)
+        conf = cfg.confidence_moderate_floor + (
+            cfg.confidence_moderate_ceiling - cfg.confidence_moderate_floor
+        ) * t
+    else:
+        # Strong anomaly far outside → 80–99%.
+        excess = (value - p99) / sigma
+        conf = cfg.confidence_strong_floor + (
+            cfg.confidence_strong_ceiling - cfg.confidence_strong_floor
+        ) * math.tanh(excess / 1.8)
+
+    return float(np.clip(conf / 100.0, 0.0, 0.99))
 
 
 def risk_band(score: float) -> str:

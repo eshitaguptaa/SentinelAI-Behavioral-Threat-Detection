@@ -33,6 +33,12 @@
   min-height: 0.7rem;
 }
 
+.cellHot {
+  border-radius: 2px;
+  min-height: 0.7rem;
+  outline: 1px solid rgba(255, 196, 120, 0.55);
+}
+
 .legend {
   display: flex;
   flex-wrap: wrap;
@@ -44,4 +50,11 @@
   font-size: 0.65rem;
   color: var(--text-muted);
   font-family: var(--font-mono);
+}
+
+.legendItemHot {
+  font-size: 0.65rem;
+  color: #e24b4b;
+  font-family: var(--font-mono);
+  font-weight: 600;
 }

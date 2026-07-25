@@ -228,7 +228,13 @@ def _attack_session_sequence(normal: list[str], attack_events: tuple[str, ...] |
     """
     head = list(normal[:2]) if len(normal) >= 2 else ["DEVICE_CONNECT", "LOGIN"]
     tail = list(normal[-1:]) if normal else ["LOGOUT"]
-    body = list(attack_events) + ["FILE_DOWNLOAD", "USB_INSERT"] + list(attack_events)
+    # Repeat attack motif so OOD tokens dominate vs residual normal tokens.
+    body = (
+        list(attack_events)
+        + ["FILE_DOWNLOAD", "USB_INSERT", "FILE_DOWNLOAD"]
+        + list(attack_events)
+        + ["SSH_LOGIN", "FILE_DOWNLOAD"]
+    )
     return head + body + tail
 
 
@@ -333,61 +339,67 @@ def _attack_specs() -> list[tuple[str, tuple[str, ...], dict[str, Any]]]:
             "Impossible Travel",
             LATERAL_MOVEMENT_SEQUENCE,
             {
-                "country_change_count": 2,
-                "location_change_count": 3,
-                "unique_location_count": 3,
-                "auth_failure_rate": 0.1,
-                "max_failed_login_streak": 1,
-                "vpn_usage_ratio": 0.45,
-                "resource_entropy": 2.0,
-                "after_hours_event_count": 2,
-                "download_size_mb_sum": 25.0,
-                "burst_max_5min": 14.0,
+                "country_change_count": 3,
+                "location_change_count": 5,
+                "unique_location_count": 4,
+                "auth_failure_rate": 0.15,
+                "max_failed_login_streak": 2,
+                "vpn_usage_ratio": 0.55,
+                "resource_entropy": 2.6,
+                "after_hours_event_count": 8,
+                "download_size_mb_sum": 40.0,
+                "burst_max_5min": 22.0,
+                "active_duration_hours": 11.0,
+                "file_access_ratio": 0.35,
             },
         ),
         (
             "Brute Force",
             BRUTE_FORCE_SEQUENCE,
             {
-                "auth_failure_rate": 0.55,
-                "max_failed_login_streak": 8,
-                "login_count": 3,
+                "auth_failure_rate": 0.62,
+                "max_failed_login_streak": 10,
+                "login_count": 4,
                 "unique_device_count": 2,
-                "device_entropy": 0.6,
-                "resource_entropy": 1.8,
-                "burst_max_5min": 20.0,
-                "after_hours_event_count": 3,
+                "device_entropy": 0.7,
+                "resource_entropy": 2.2,
+                "burst_max_5min": 24.0,
+                "after_hours_event_count": 6,
+                "vpn_usage_ratio": 0.35,
             },
         ),
         (
             "Mass Download / Exfil",
             DATA_EXFILTRATION_SEQUENCE,
             {
-                "download_size_mb_sum": 180.0,
-                "mass_download_event_count": 2,
-                "file_access_ratio": 0.42,
-                "file_access_count": 10,
-                "resource_entropy": 2.2,
-                "after_hours_event_count": 5,
-                "burst_max_5min": 16.0,
-                "vpn_usage_ratio": 0.5,
+                "download_size_mb_sum": 220.0,
+                "mass_download_event_count": 3,
+                "file_access_ratio": 0.55,
+                "file_access_count": 14,
+                "resource_entropy": 2.5,
+                "after_hours_event_count": 9,
+                "burst_max_5min": 20.0,
+                "vpn_usage_ratio": 0.55,
+                "night_event_count": 4,
+                "active_duration_hours": 11.0,
             },
         ),
         (
             "Insider / Device",
             INSIDER_THREAT_SEQUENCE,
             {
-                "unique_device_count": 4,
-                "device_entropy": 1.25,
-                "after_hours_event_count": 14,
-                "active_duration_hours": 13.0,
-                "file_access_ratio": 0.48,
-                "night_event_count": 6,
-                "download_size_mb_sum": 70.0,
+                "unique_device_count": 5,
+                "device_entropy": 1.4,
+                "after_hours_event_count": 16,
+                "active_duration_hours": 14.0,
+                "file_access_ratio": 0.52,
+                "night_event_count": 8,
+                "download_size_mb_sum": 90.0,
                 "mass_download_event_count": 0,
-                "location_change_count": 2,
+                "location_change_count": 3,
                 "unique_location_count": 2,
-                "resource_entropy": 2.1,
+                "resource_entropy": 2.4,
+                "burst_max_5min": 18.0,
             },
         ),
     ]

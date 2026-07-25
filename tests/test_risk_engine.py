@@ -74,11 +74,28 @@ def test_clamp_and_risk_levels() -> None:
 
 
 def test_low_risk_quiet_day() -> None:
-    """Low anomaly + quiet behaviour → LOW."""
-    assessment = assess_risk(_prediction(normalized_score=5.0), _vector())
+    """Low anomaly + quiet behaviour → LOW fused risk."""
+    assessment = assess_risk(
+        _prediction(normalized_score=5.0),
+        _vector(),
+        attack_confidence=0.0,
+        model_confidence=0.55,
+    )
     assert assessment.risk_level == "LOW"
-    assert assessment.risk_score == 5.0
+    assert 0.0 <= assessment.risk_score < 35.0
     assert assessment.recommendation == "Continue monitoring."
+
+
+def test_fused_risk_not_equal_to_anomaly() -> None:
+    """Weighted fusion produces a distinct risk score (not a copy of anomaly)."""
+    assessment = assess_risk(
+        _prediction(normalized_score=40.0),
+        _vector(auth_failure_rate=0.3, max_failed_login_streak=4),
+        attack_confidence=0.84,
+        model_confidence=0.7,
+    )
+    assert assessment.risk_score != assessment.anomaly_score
+    assert 0.0 <= assessment.risk_score <= 100.0
 
 
 def test_attack_ground_truth_does_not_change_score() -> None:
@@ -94,7 +111,7 @@ def test_attack_ground_truth_does_not_change_score() -> None:
 
 
 def test_behavioural_uplift_and_factors() -> None:
-    """Elevated behavioural signals increase score and emit factors."""
+    """Elevated behavioural signals increase fused risk via behaviour_score."""
     pred = _prediction(normalized_score=55.0)
     vector = _vector(
         auth_failure_rate=0.6,
@@ -103,9 +120,11 @@ def test_behavioural_uplift_and_factors() -> None:
         after_hours_event_count=20,
         download_size_mb_sum=200.0,
     )
-    assessment = assess_risk(pred, vector)
-    assert assessment.risk_score > assessment.anomaly_score
-    assert assessment.risk_level in {"HIGH", "CRITICAL"}
+    quiet = assess_risk(pred, _vector(), attack_confidence=0.0, model_confidence=0.7)
+    assessment = assess_risk(
+        pred, vector, attack_confidence=0.9, model_confidence=0.85
+    )
+    assert assessment.risk_score > quiet.risk_score
     assert assessment.contributing_factors
     assert all(isinstance(factor, str) and factor for factor in assessment.contributing_factors)
     joined = " ".join(assessment.contributing_factors).lower()

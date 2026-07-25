@@ -20,6 +20,9 @@ export type AttackType =
   | "Insider Activity"
   | "Mass Download"
   | "Suspicious VPN Usage"
+  | "None"
+  | "Behavioural Anomaly"
+  | "Unknown Behaviour"
   | "Normal Activity"
   | string;
 
@@ -170,5 +173,8 @@ export const ATTACK_COLORS: Record<string, string> = {
   "Insider Activity": "#d4a017",
   "Mass Download": "#e06b9f",
   "Suspicious VPN Usage": "#6b8cae",
+  None: "#8a98a8",
+  "Behavioural Anomaly": "#e08a3c",
+  "Unknown Behaviour": "#c4a35a",
   "Normal Activity": "#3dba7a",
 };

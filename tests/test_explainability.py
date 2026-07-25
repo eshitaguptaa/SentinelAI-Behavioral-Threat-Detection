@@ -60,31 +60,39 @@ def _assessment(**overrides: Any) -> RiskAssessment:
 
 def test_summaries_by_level() -> None:
     """Each risk level maps to a fixed Normal-Activity summary string."""
-    assert "consistent" in summary_for_risk_level("LOW").lower()
+    assert "routine" in summary_for_risk_level("LOW").lower()
     assert "moderate" in summary_for_risk_level("MEDIUM").lower()
     assert "elevated" in summary_for_risk_level("HIGH").lower()
-    assert "investigation" in summary_for_risk_level("CRITICAL").lower()
+    assert "investigate" in summary_for_risk_level("CRITICAL").lower()
 
 
 def test_explain_reuses_assessment_fields() -> None:
-    """Factors are copied; recommendation is attack-aware; risk score unchanged."""
+    """Risk score unchanged; findings split into Transformer vs Rule lists."""
     assessment = _assessment()
     vector = _vector()
-    explanation = explain(assessment, vector)
+    explanation = explain(
+        assessment,
+        vector,
+        attack_type="Impossible Travel",
+        matched_signals=["country_change_count=2"],
+        status="Confirmed Threat",
+        confidence=0.9,
+    )
 
     assert isinstance(explanation, RiskExplanation)
     assert explanation.risk_score == assessment.risk_score
     assert explanation.risk_level == assessment.risk_level
-    assert "monitoring" in explanation.recommendation.lower()
-    assert explanation.contributing_factors == assessment.contributing_factors
-    assert explanation.summary == summary_for_risk_level("CRITICAL")
-    assert explanation.observations
-    assert all(isinstance(item, str) and item for item in explanation.observations)
-    assert all("attack" not in item.lower() for item in explanation.observations)
+    assert explanation.recommendation
+    assert explanation.contributing_factors  # Transformer findings
+    assert any("reconstruction" in f.lower() for f in explanation.contributing_factors)
+    assert explanation.observations  # Rule findings
+    assert any("impossible" in o.lower() or "country" in o.lower() for o in explanation.observations)
+    assert "Decision:" in explanation.summary
+    assert all("has_attack" not in item.lower() for item in explanation.observations)
 
 
-def test_quiet_day_has_no_observations() -> None:
-    """Thresholds produce an empty observation list for calm behaviour."""
+def test_quiet_day_has_minimal_rule_findings() -> None:
+    """Calm behaviour yields Normal-Activity rule finding, no download/auth noise."""
     assessment = _assessment(
         risk_score=5.0,
         risk_level="LOW",
@@ -110,9 +118,15 @@ def test_quiet_day_has_no_observations() -> None:
         attack_event_count=0,
         label=0,
     )
-    explanation = explain(assessment, vector)
-    assert explanation.observations == []
-    assert "consistent" in explanation.summary.lower()
+    explanation = explain(
+        assessment,
+        vector,
+        attack_type="None",
+        status="Normal",
+        confidence=0.55,
+    )
+    assert explanation.observations[0] == "No attack-classification rule matched"
+    assert "Decision: Normal" in explanation.summary
 
 
 def test_identity_mismatch_raises() -> None:

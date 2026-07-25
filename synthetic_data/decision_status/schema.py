@@ -20,3 +20,20 @@ VALID_FINAL_STATUSES: Final[frozenset[str]] = frozenset(
 )
 
 NORMAL_ATTACK_TYPE: Final[str] = "Normal Activity"
+
+# Labels that mean "no signature rule matched" (cannot become Confirmed Threat).
+NON_SIGNATURE_ATTACK_TYPES: Final[frozenset[str]] = frozenset(
+    {
+        "None",
+        "Behavioural Anomaly",
+        "Unknown Behaviour",
+        "Normal Activity",  # legacy
+        "",
+    }
+)
+
+
+def is_signature_attack(attack_type: str | None) -> bool:
+    """True when a named attack rule matched (not None / Behavioural Anomaly)."""
+    label = (attack_type or "").strip()
+    return bool(label) and label not in NON_SIGNATURE_ATTACK_TYPES

@@ -205,16 +205,35 @@ def evaluate_rules(
     features: BehaviourFeatures,
     *,
     rules: Sequence[ClassificationRule] | None = None,
+    anomaly_score: float | None = None,
 ) -> RuleMatch:
-    """Return the first matching rule, or Normal Activity."""
+    """Return the first matching signature rule, or a non-signature label.
+
+    When no rule matches, the label depends on ``anomaly_score``::
+
+        ≤ LOW band          → None
+        MEDIUM band         → Unknown Behaviour
+        HIGH / CRITICAL     → Behavioural Anomaly
+
+    ``Normal Activity`` is never returned.
+    """
+    from synthetic_data.attack_classification.labeling import (
+        resolve_unmatched_attack_type,
+    )
+
     pipeline = rules if rules is not None else CLASSIFICATION_RULES
     for rule in pipeline:
         result = rule(features)
         if result.matched:
             return result
-    return RuleMatch(
-        True,
-        AttackType.NORMAL_ACTIVITY,
-        0.0,
-        ("no_attack_rule_matched",),
-    )
+
+    score = 0.0 if anomaly_score is None else float(anomaly_score)
+    label = resolve_unmatched_attack_type(score)
+    signals: tuple[str, ...]
+    if label is AttackType.NONE:
+        signals = ("no_attack_rule_matched", "anomaly_within_normal_band")
+    elif label is AttackType.UNKNOWN_BEHAVIOUR:
+        signals = ("no_attack_rule_matched", "moderate_reconstruction_anomaly")
+    else:
+        signals = ("no_attack_rule_matched", "elevated_reconstruction_anomaly")
+    return RuleMatch(True, label, 0.0, signals)

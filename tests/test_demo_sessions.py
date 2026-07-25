@@ -47,8 +47,11 @@ def test_demo_mix_and_normal_vocabulary() -> None:
         assert vector.auth_failure_rate < 0.1
         assert vector.mass_download_event_count == 0
         assert vector.unique_device_count == 1
-        attack = classify_attack(build_feature_vector(vector.to_payload()))
-        assert attack.attack_type == "Normal Activity"
+        attack = classify_attack(
+            build_feature_vector(vector.to_payload()),
+            anomaly_score=10.0,
+        )
+        assert attack.attack_type == "None"
 
 
 def test_mild_anomalies_do_not_match_attack_rules() -> None:
@@ -56,8 +59,11 @@ def test_mild_anomalies_do_not_match_attack_rules() -> None:
     mild = [v for v in vectors if v.demo_kind == "mild_anomaly"]
     assert len(mild) == 2
     for vector in mild:
-        attack = classify_attack(build_feature_vector(vector.to_payload()))
-        assert attack.attack_type == "Normal Activity"
+        attack = classify_attack(
+            build_feature_vector(vector.to_payload()),
+            anomaly_score=80.0,
+        )
+        assert attack.attack_type == "Behavioural Anomaly"
 
 
 def test_confirmed_attacks_match_attack_rules() -> None:
@@ -65,5 +71,13 @@ def test_confirmed_attacks_match_attack_rules() -> None:
     attacks = [v for v in vectors if v.demo_kind == "confirmed_attack"]
     assert len(attacks) == 4
     for vector in attacks:
-        attack = classify_attack(build_feature_vector(vector.to_payload()))
-        assert attack.attack_type != "Normal Activity"
+        attack = classify_attack(
+            build_feature_vector(vector.to_payload()),
+            anomaly_score=90.0,
+        )
+        assert attack.attack_type not in {
+            "None",
+            "Behavioural Anomaly",
+            "Unknown Behaviour",
+            "Normal Activity",
+        }

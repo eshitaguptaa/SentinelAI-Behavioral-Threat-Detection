@@ -87,8 +87,10 @@ _MITRE_BY_ATTACK: Final[dict[str, MitreMapping]] = {
 
 
 def map_attack_to_mitre(attack_type: str) -> MitreMapping | None:
-    """Return MITRE mapping for a classified attack, or ``None`` for Normal Activity."""
-    if attack_type == "Normal Activity":
+    """Return MITRE mapping for a signature attack, or ``None`` otherwise."""
+    from synthetic_data.decision_status.schema import is_signature_attack
+
+    if not is_signature_attack(attack_type):
         return None
     return _MITRE_BY_ATTACK.get(attack_type)
 
