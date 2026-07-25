@@ -1,0 +1,24 @@
+# SentinelAI — Python dependencies (API + pipeline + tests)
+# Install: pip install -r requirements.txt
+
+# Web API
+fastapi>=0.140.0,<1.0
+uvicorn[standard]>=0.51.0,<1.0
+pydantic>=2.0,<3.0
+python-dotenv>=1.0,<2.0
+httpx>=0.27,<1.0
+
+# ML / numerical (Isolation Forest)
+numpy>=2.0,<3.0
+scikit-learn>=1.5,<2.0
+joblib>=1.4,<2.0
+scipy>=1.11,<2.0
+threadpoolctl>=3.0,<4.0
+
+# Synthetic data generators
+Faker>=30.0,<41.0
+pandas>=2.0,<4.0
+python-dateutil>=2.9,<3.0
+
+# Tests
+pytest>=8.0,<9.0

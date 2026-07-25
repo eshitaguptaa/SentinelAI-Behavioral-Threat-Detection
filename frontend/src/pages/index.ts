@@ -1,0 +1,5 @@
+export { DashboardPage } from './DashboardPage'
+export { AlertsPage } from './AlertsPage'
+export { InvestigationPage } from './InvestigationPage'
+export { AnalyticsPage } from './AnalyticsPage'
+export { SettingsPage } from './SettingsPage'

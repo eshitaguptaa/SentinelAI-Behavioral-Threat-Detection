@@ -1,0 +1,101 @@
+employee_id,full_name,email,department_id,role,manager_id,office_location_id,timezone,work_start_hour,work_end_hour,assigned_device_ids
+EMP-0001,Allison Hill,allison.hill@sentinelai.corp,DEPT-ENGINEERING,Director,,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0001|DEV-0002
+EMP-0002,Brian Yang,brian.yang@sentinelai.corp,DEPT-ENGINEERING,Manager,EMP-0001,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0003|DEV-0004
+EMP-0003,Javier Johnson,javier.johnson@sentinelai.corp,DEPT-ENGINEERING,Manager,EMP-0001,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0005|DEV-0006
+EMP-0004,Lance Hoffman,lance.hoffman@sentinelai.corp,DEPT-ENGINEERING,Senior Engineer,EMP-0002,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0007|DEV-0008
+EMP-0005,Kevin Pacheco,kevin.pacheco@sentinelai.corp,DEPT-ENGINEERING,Software Engineer,EMP-0002,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0009|DEV-0010|DEV-0011
+EMP-0006,Gina Moore,gina.moore@sentinelai.corp,DEPT-ENGINEERING,Software Engineer,EMP-0002,LOC-LONDON,Europe/London,9,17,DEV-0012|DEV-0013|DEV-0014
+EMP-0007,Brent Abbott,brent.abbott@sentinelai.corp,DEPT-ENGINEERING,Senior Engineer,EMP-0002,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0015|DEV-0016
+EMP-0008,Monica Herrera,monica.herrera@sentinelai.corp,DEPT-ENGINEERING,Software Engineer,EMP-0002,LOC-NEW_YORK,America/New_York,9,17,DEV-0017|DEV-0018
+EMP-0009,Sandra Montgomery,sandra.montgomery@sentinelai.corp,DEPT-ENGINEERING,Intern,EMP-0003,LOC-LONDON,Europe/London,9,17,DEV-0019|DEV-0020
+EMP-0010,Benjamin Stanley,benjamin.stanley@sentinelai.corp,DEPT-ENGINEERING,Software Engineer,EMP-0003,LOC-LONDON,Europe/London,9,17,DEV-0021|DEV-0022
+EMP-0011,Sharon James,sharon.james@sentinelai.corp,DEPT-ENGINEERING,Intern,EMP-0003,LOC-NEW_YORK,America/New_York,9,17,DEV-0023|DEV-0024
+EMP-0012,Carla Kelly,carla.kelly@sentinelai.corp,DEPT-ENGINEERING,Intern,EMP-0003,LOC-LONDON,Europe/London,9,17,DEV-0025
+EMP-0013,Maria Lynch,maria.lynch@sentinelai.corp,DEPT-ENGINEERING,Intern,EMP-0003,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0026|DEV-0027
+EMP-0014,Carla Gray,carla.gray@sentinelai.corp,DEPT-IT,Director,,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0028|DEV-0029
+EMP-0015,Frederick Tate,frederick.tate@sentinelai.corp,DEPT-IT,Manager,EMP-0014,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0030|DEV-0031|DEV-0032
+EMP-0016,Andrew Stewart,andrew.stewart@sentinelai.corp,DEPT-IT,Manager,EMP-0014,LOC-LONDON,Europe/London,9,17,DEV-0033|DEV-0034
+EMP-0017,Thomas Bradley,thomas.bradley@sentinelai.corp,DEPT-IT,Security Analyst,EMP-0015,LOC-LONDON,Europe/London,9,17,DEV-0035|DEV-0036
+EMP-0018,Jennifer Rocha,jennifer.rocha@sentinelai.corp,DEPT-IT,Security Analyst,EMP-0015,LOC-NEW_YORK,America/New_York,9,17,DEV-0037
+EMP-0019,David Hoffman,david.hoffman@sentinelai.corp,DEPT-IT,Intern,EMP-0015,LOC-LONDON,Europe/London,9,17,DEV-0038|DEV-0039
+EMP-0020,Jennifer Robinson,jennifer.robinson@sentinelai.corp,DEPT-IT,Intern,EMP-0015,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0040|DEV-0041|DEV-0042
+EMP-0021,Anthony Rodriguez,anthony.rodriguez@sentinelai.corp,DEPT-IT,Intern,EMP-0015,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0043
+EMP-0022,Janice Carlson,janice.carlson@sentinelai.corp,DEPT-IT,Intern,EMP-0016,LOC-NEW_YORK,America/New_York,9,17,DEV-0044|DEV-0045
+EMP-0023,Shannon Smith,shannon.smith@sentinelai.corp,DEPT-IT,Intern,EMP-0016,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0046|DEV-0047
+EMP-0024,Gina Carter,gina.carter@sentinelai.corp,DEPT-IT,Intern,EMP-0016,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0048|DEV-0049|DEV-0050
+EMP-0025,Nathan Cortez,nathan.cortez@sentinelai.corp,DEPT-IT,Security Analyst,EMP-0016,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0051|DEV-0052
+EMP-0026,Ashley Garrett,ashley.garrett@sentinelai.corp,DEPT-IT,Security Analyst,EMP-0016,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0053|DEV-0054
+EMP-0027,Phillip Ryan,phillip.ryan@sentinelai.corp,DEPT-FINANCE,Director,,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0055|DEV-0056
+EMP-0028,Linda Burns,linda.burns@sentinelai.corp,DEPT-FINANCE,Manager,EMP-0027,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0057
+EMP-0029,Sherry Decker,sherry.decker@sentinelai.corp,DEPT-FINANCE,Manager,EMP-0027,LOC-LONDON,Europe/London,9,17,DEV-0058
+EMP-0030,David Bradley,david.bradley@sentinelai.corp,DEPT-FINANCE,Finance Analyst,EMP-0028,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0059|DEV-0060
+EMP-0031,Rose Spence,rose.spence@sentinelai.corp,DEPT-FINANCE,Finance Analyst,EMP-0028,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0061|DEV-0062
+EMP-0032,John Pierce,john.pierce@sentinelai.corp,DEPT-FINANCE,Intern,EMP-0028,LOC-LONDON,Europe/London,9,17,DEV-0063|DEV-0064
+EMP-0033,Tanya Campos,tanya.campos@sentinelai.corp,DEPT-FINANCE,Intern,EMP-0028,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0065|DEV-0066
+EMP-0034,Michael Brooks,michael.brooks@sentinelai.corp,DEPT-FINANCE,Intern,EMP-0028,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0067|DEV-0068
+EMP-0035,Danny Morgan,danny.morgan@sentinelai.corp,DEPT-FINANCE,Finance Analyst,EMP-0029,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0069|DEV-0070
+EMP-0036,Adrienne Zimmerman,adrienne.zimmerman@sentinelai.corp,DEPT-FINANCE,Finance Analyst,EMP-0029,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0071
+EMP-0037,Andre Rivera,andre.rivera@sentinelai.corp,DEPT-FINANCE,Finance Analyst,EMP-0029,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0072|DEV-0073
+EMP-0038,John Ryan,john.ryan@sentinelai.corp,DEPT-FINANCE,Intern,EMP-0029,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0074|DEV-0075
+EMP-0039,John Russell,john.russell@sentinelai.corp,DEPT-FINANCE,Finance Analyst,EMP-0029,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0076|DEV-0077
+EMP-0040,Heather Jenkins,heather.jenkins@sentinelai.corp,DEPT-HUMAN_RESOURCES,Director,,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0078|DEV-0079
+EMP-0041,Victoria Garcia,victoria.garcia@sentinelai.corp,DEPT-HUMAN_RESOURCES,Manager,EMP-0040,LOC-NEW_YORK,America/New_York,9,17,DEV-0080|DEV-0081
+EMP-0042,Rebecca Rodriguez,rebecca.rodriguez@sentinelai.corp,DEPT-HUMAN_RESOURCES,Manager,EMP-0040,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0082|DEV-0083
+EMP-0043,Jerry Henderson,jerry.henderson@sentinelai.corp,DEPT-HUMAN_RESOURCES,Intern,EMP-0041,LOC-LONDON,Europe/London,9,17,DEV-0084|DEV-0085|DEV-0086
+EMP-0044,Thomas Ramos,thomas.ramos@sentinelai.corp,DEPT-HUMAN_RESOURCES,HR Executive,EMP-0041,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0087|DEV-0088
+EMP-0045,Zachary Huff,zachary.huff@sentinelai.corp,DEPT-HUMAN_RESOURCES,HR Executive,EMP-0041,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0089|DEV-0090|DEV-0091
+EMP-0046,John Lewis,john.lewis@sentinelai.corp,DEPT-HUMAN_RESOURCES,HR Executive,EMP-0041,LOC-NEW_YORK,America/New_York,9,17,DEV-0092|DEV-0093
+EMP-0047,Aaron Myers,aaron.myers@sentinelai.corp,DEPT-HUMAN_RESOURCES,Intern,EMP-0041,LOC-NEW_YORK,America/New_York,9,17,DEV-0094|DEV-0095
+EMP-0048,Tyler Cowan,tyler.cowan@sentinelai.corp,DEPT-HUMAN_RESOURCES,Intern,EMP-0042,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0096|DEV-0097
+EMP-0049,Edward Novak,edward.novak@sentinelai.corp,DEPT-HUMAN_RESOURCES,HR Executive,EMP-0042,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0098|DEV-0099
+EMP-0050,Amy Silva,amy.silva@sentinelai.corp,DEPT-HUMAN_RESOURCES,HR Executive,EMP-0042,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0100|DEV-0101|DEV-0102
+EMP-0051,Jordan York,jordan.york@sentinelai.corp,DEPT-HUMAN_RESOURCES,HR Executive,EMP-0042,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0103|DEV-0104|DEV-0105
+EMP-0052,Cynthia Wilson,cynthia.wilson@sentinelai.corp,DEPT-HUMAN_RESOURCES,HR Executive,EMP-0042,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0106|DEV-0107|DEV-0108
+EMP-0053,Amanda Miller,amanda.miller@sentinelai.corp,DEPT-SALES,Director,,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0109
+EMP-0054,Emily Green,emily.green@sentinelai.corp,DEPT-SALES,Manager,EMP-0053,LOC-LONDON,Europe/London,9,17,DEV-0110|DEV-0111
+EMP-0055,James Powers,james.powers@sentinelai.corp,DEPT-SALES,Manager,EMP-0053,LOC-LONDON,Europe/London,9,17,DEV-0112|DEV-0113
+EMP-0056,Timothy Walls,timothy.walls@sentinelai.corp,DEPT-SALES,Intern,EMP-0054,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0114|DEV-0115
+EMP-0057,Kristine Garcia,kristine.garcia@sentinelai.corp,DEPT-SALES,Sales Executive,EMP-0054,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0116|DEV-0117
+EMP-0058,Brandi Bailey,brandi.bailey@sentinelai.corp,DEPT-SALES,Sales Executive,EMP-0054,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0118|DEV-0119
+EMP-0059,Christopher Bass,christopher.bass@sentinelai.corp,DEPT-SALES,Sales Executive,EMP-0054,LOC-LONDON,Europe/London,9,17,DEV-0120|DEV-0121
+EMP-0060,Kristen Huynh,kristen.huynh@sentinelai.corp,DEPT-SALES,Sales Executive,EMP-0054,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0122
+EMP-0061,Steve Newton,steve.newton@sentinelai.corp,DEPT-SALES,Intern,EMP-0055,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0123|DEV-0124
+EMP-0062,Daniel Cooper,daniel.cooper@sentinelai.corp,DEPT-SALES,Intern,EMP-0055,LOC-LONDON,Europe/London,9,17,DEV-0125
+EMP-0063,Terry Williams,terry.williams@sentinelai.corp,DEPT-SALES,Intern,EMP-0055,LOC-NEW_YORK,America/New_York,9,17,DEV-0126
+EMP-0064,Gavin Anderson,gavin.anderson@sentinelai.corp,DEPT-SALES,Sales Executive,EMP-0055,LOC-LONDON,Europe/London,9,17,DEV-0127|DEV-0128|DEV-0129
+EMP-0065,Kristen Patterson,kristen.patterson@sentinelai.corp,DEPT-MARKETING,Director,,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0130|DEV-0131
+EMP-0066,Tony Vazquez,tony.vazquez@sentinelai.corp,DEPT-MARKETING,Manager,EMP-0065,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0132|DEV-0133|DEV-0134
+EMP-0067,Sandra Aguilar,sandra.aguilar@sentinelai.corp,DEPT-MARKETING,Manager,EMP-0065,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0135|DEV-0136|DEV-0137
+EMP-0068,Andrew Diaz,andrew.diaz@sentinelai.corp,DEPT-MARKETING,Intern,EMP-0066,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0138|DEV-0139
+EMP-0069,David Garcia,david.garcia@sentinelai.corp,DEPT-MARKETING,Intern,EMP-0066,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0140|DEV-0141
+EMP-0070,Nicole Frost,nicole.frost@sentinelai.corp,DEPT-MARKETING,Marketing Executive,EMP-0066,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0142|DEV-0143
+EMP-0071,Rita Keith,rita.keith@sentinelai.corp,DEPT-MARKETING,Marketing Executive,EMP-0066,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0144
+EMP-0072,Evelyn Galvan,evelyn.galvan@sentinelai.corp,DEPT-MARKETING,Intern,EMP-0066,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0145|DEV-0146
+EMP-0073,Michael Reyes,michael.reyes@sentinelai.corp,DEPT-MARKETING,Intern,EMP-0067,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0147
+EMP-0074,Robert Stevens,robert.stevens@sentinelai.corp,DEPT-MARKETING,Marketing Executive,EMP-0067,LOC-LONDON,Europe/London,9,17,DEV-0148|DEV-0149
+EMP-0075,Matthew Ross,matthew.ross@sentinelai.corp,DEPT-MARKETING,Marketing Executive,EMP-0067,LOC-LONDON,Europe/London,9,17,DEV-0150|DEV-0151
+EMP-0076,Diana May,diana.may@sentinelai.corp,DEPT-MARKETING,Intern,EMP-0067,LOC-NEW_YORK,America/New_York,9,17,DEV-0152|DEV-0153
+EMP-0077,Ashley Waller,ashley.waller@sentinelai.corp,DEPT-LEGAL,Director,,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0154|DEV-0155
+EMP-0078,Victoria Johnson,victoria.johnson@sentinelai.corp,DEPT-LEGAL,Manager,EMP-0077,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0156|DEV-0157
+EMP-0079,Nicholas Edwards,nicholas.edwards@sentinelai.corp,DEPT-LEGAL,Manager,EMP-0077,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0158|DEV-0159
+EMP-0080,Mrs. Stephanie Lee,mrs.stephanie.lee@sentinelai.corp,DEPT-LEGAL,Intern,EMP-0078,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0160|DEV-0161
+EMP-0081,Timothy Ryan,timothy.ryan@sentinelai.corp,DEPT-LEGAL,Intern,EMP-0078,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0162|DEV-0163|DEV-0164
+EMP-0082,Travis Mccall,travis.mccall@sentinelai.corp,DEPT-LEGAL,Intern,EMP-0078,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0165|DEV-0166
+EMP-0083,Belinda Mccullough,belinda.mccullough@sentinelai.corp,DEPT-LEGAL,Intern,EMP-0078,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0167|DEV-0168
+EMP-0084,Erika Terry,erika.terry@sentinelai.corp,DEPT-LEGAL,Legal Counsel,EMP-0078,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0169|DEV-0170
+EMP-0085,Maurice Gray,maurice.gray@sentinelai.corp,DEPT-LEGAL,Intern,EMP-0079,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0171|DEV-0172
+EMP-0086,Roy Torres,roy.torres@sentinelai.corp,DEPT-LEGAL,Intern,EMP-0079,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0173|DEV-0174
+EMP-0087,Lisa Morris,lisa.morris@sentinelai.corp,DEPT-LEGAL,Intern,EMP-0079,LOC-NEW_YORK,America/New_York,9,17,DEV-0175|DEV-0176|DEV-0177
+EMP-0088,Kayla Leon,kayla.leon@sentinelai.corp,DEPT-LEGAL,Legal Counsel,EMP-0079,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0178|DEV-0179
+EMP-0089,Matthew Harvey,matthew.harvey@sentinelai.corp,DEPT-OPERATIONS,Director,,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0180|DEV-0181|DEV-0182
+EMP-0090,Nicole Chambers,nicole.chambers@sentinelai.corp,DEPT-OPERATIONS,Manager,EMP-0089,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0183|DEV-0184
+EMP-0091,Brittany Williams,brittany.williams@sentinelai.corp,DEPT-OPERATIONS,Manager,EMP-0089,LOC-NEW_YORK,America/New_York,9,17,DEV-0185|DEV-0186
+EMP-0092,Patricia Gibson,patricia.gibson@sentinelai.corp,DEPT-OPERATIONS,Operations Engineer,EMP-0090,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0187|DEV-0188|DEV-0189
+EMP-0093,Janet Ross,janet.ross@sentinelai.corp,DEPT-OPERATIONS,Operations Engineer,EMP-0090,LOC-HYDERABAD,Asia/Kolkata,9,17,DEV-0190|DEV-0191|DEV-0192
+EMP-0094,Shannon Mcclure,shannon.mcclure@sentinelai.corp,DEPT-OPERATIONS,Operations Engineer,EMP-0090,LOC-NEW_YORK,America/New_York,9,17,DEV-0193
+EMP-0095,Tyler Holmes,tyler.holmes@sentinelai.corp,DEPT-OPERATIONS,Operations Engineer,EMP-0090,LOC-BENGALURU,Asia/Kolkata,9,17,DEV-0194|DEV-0195
+EMP-0096,Barbara Anderson,barbara.anderson@sentinelai.corp,DEPT-OPERATIONS,Intern,EMP-0090,LOC-NEW_YORK,America/New_York,9,17,DEV-0196|DEV-0197
+EMP-0097,Stephanie Salazar,stephanie.salazar@sentinelai.corp,DEPT-OPERATIONS,Intern,EMP-0091,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0198|DEV-0199
+EMP-0098,Kimberly Merritt,kimberly.merritt@sentinelai.corp,DEPT-OPERATIONS,Intern,EMP-0091,LOC-NEW_YORK,America/New_York,9,17,DEV-0200|DEV-0201
+EMP-0099,David Walsh,david.walsh@sentinelai.corp,DEPT-OPERATIONS,Intern,EMP-0091,LOC-SINGAPORE,Asia/Singapore,9,17,DEV-0202|DEV-0203
+EMP-0100,Denise Jones,denise.jones@sentinelai.corp,DEPT-OPERATIONS,Operations Engineer,EMP-0091,LOC-LONDON,Europe/London,9,17,DEV-0204|DEV-0205

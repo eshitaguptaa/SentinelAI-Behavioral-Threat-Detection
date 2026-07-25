@@ -1,0 +1,96 @@
+# =========================
+# Dependencies
+# =========================
+node_modules/
+frontend/node_modules/
+
+.venv/
+backend/.venv/
+venv/
+env/
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# =========================
+# Build Artifacts
+# =========================
+dist/
+frontend/dist/
+build/
+coverage/
+htmlcov/
+
+# =========================
+# Python Packaging
+# =========================
+*.egg
+*.egg-info/
+.eggs/
+
+# =========================
+# Environment Variables
+# =========================
+.env
+.env.local
+.env.*.local
+*.pem
+
+# =========================
+# Databases
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# Logs
+# =========================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# =========================
+# Cache
+# =========================
+.cache/
+.turbo/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.tsbuildinfo
+
+# =========================
+# ML Artifacts
+# =========================
+*.joblib
+!models/sentinelai_iforest.joblib
+*.pkl
+*.pickle
+*.h5
+*.pt
+*.pth
+*.onnx
+mlruns/
+wandb/
+
+# =========================
+# IDE
+# =========================
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+Desktop.ini

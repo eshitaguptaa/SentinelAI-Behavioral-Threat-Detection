@@ -1,0 +1,44 @@
+.card {
+  border-radius: 0.85rem;
+  padding: 1rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  min-height: 6.25rem;
+}
+
+.label {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.value {
+  margin: 0.55rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.hint {
+  margin: 0.55rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.anomaly .value {
+  color: #7ec8ff;
+}
+
+.high .value {
+  color: #e08a3c;
+}
+
+.critical .value {
+  color: #e24b4b;
+}
