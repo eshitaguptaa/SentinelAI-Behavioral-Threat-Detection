@@ -14,6 +14,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from fastapi.middleware.cors import CORSMiddleware
 from synthetic_data.anomaly_detection import IsolationForestModel
 from synthetic_data.anomaly_detection.validation import InvalidModelFileError
 from synthetic_data.api.routes import router
@@ -49,14 +50,25 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     """Build the SentinelAI FastAPI application."""
     application = FastAPI(
-        title=APP_TITLE,
-        version=APP_VERSION,
-        description=(
-            "SentinelAI inference API. Exposes anomaly detection, risk scoring, "
-            "and explainability over pre-computed Phase 8 feature vectors. "
-            "Does not retrain models."
-        ),
-        lifespan=lifespan,
+    title=APP_TITLE,
+    version=APP_VERSION,
+    description=(
+        "SentinelAI inference API. Exposes anomaly detection, risk scoring, "
+        "and explainability over pre-computed Phase 8 feature vectors. "
+        "Does not retrain models."
+    ),
+    lifespan=lifespan,
+)
+
+    application.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
     )
 
     @application.exception_handler(RequestValidationError)
