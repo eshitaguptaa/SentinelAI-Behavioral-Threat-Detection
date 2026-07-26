@@ -1,10 +1,17 @@
 """Enterprise-realistic demo session generator for the SOC dashboard.
 
-Mix (default 24 users)::
+Default mix (24 users)::
 
     ~75% Normal Activity          — sampled from Transformer training events
     ~10% Behavioural anomalies    — odd sequences, no attack-rule match
     ~15% Confirmed attacks        — attack subsequences + matching rule features
+
+Large-batch mix (count >= 100, e.g. 500-employee enterprise demo)::
+
+    ~94% Normal / ~3% Mild / ~3% Confirmed attacks
+    Multi-day spread, quiet feature jitter, eight attack scenario types
+    Normals are filtered to low reconstruction error so the SOC queue is not
+    flooded with HIGH risk (typical enterprise elevated share stays ~5–8%).
 
 Normal sessions reuse the same event-type distribution as
 ``datasets/events.csv`` (the Transformer training corpus). Attack / mild
@@ -114,14 +121,44 @@ class DemoFeatureVector:
 
 
 def mix_counts(count: int = 24) -> tuple[int, int, int]:
-    """Return (n_normal, n_mild, n_attack) ≈ 75% / 10% / 15%."""
-    n_attack = max(1, round(count * 0.15))
-    n_mild = max(1, round(count * 0.10))
+    """Return (n_normal, n_mild, n_attack).
+
+    Small demos keep ~75% / 10% / 15%. Enterprise-scale batches use a sparse
+    alert mix (~94% / 3% / 3%) so HIGH/CRITICAL stay in a realistic SOC range.
+    """
+    if count >= 100:
+        n_attack = max(8, round(count * 0.03))
+        n_mild = max(5, round(count * 0.03))
+    else:
+        n_attack = max(1, round(count * 0.15))
+        n_mild = max(1, round(count * 0.10))
     n_normal = count - n_attack - n_mild
     if n_normal < 1:
         n_normal = 1
         n_mild = max(0, count - n_normal - n_attack)
     return n_normal, n_mild, n_attack
+
+
+def _employee_id(index: int) -> str:
+    """Zero-padded employee id (4 digits once the corpus exceeds 999)."""
+    width = 4 if index >= 1000 else 3
+    return f"EMP-{index:0{width}d}"
+
+
+def _jitter(rng: random.Random, value: float, spread: float) -> float:
+    return round(max(0.0, value + rng.uniform(-spread, spread)), 4)
+
+
+def _assign_day(rng: random.Random, base_day: str, *, span_days: int = 5) -> str:
+    """Spread normal/mild sessions across nearby weekdays for realism."""
+    try:
+        from datetime import date, timedelta
+
+        root = date.fromisoformat(base_day[:10])
+    except ValueError:
+        return base_day
+    offset = rng.randint(0, max(0, span_days - 1))
+    return (root - timedelta(days=offset)).isoformat()
 
 
 def _load_training_sessions(
@@ -275,58 +312,68 @@ def _select_low_error_normals(
     model_path: Path | None,
     max_error: float | None,
 ) -> list[tuple[str, str, list[str]]]:
-    """Pick ``n`` training sessions from the bulk of the error distribution."""
+    """Pick ``n`` training sessions from the bulk of the error distribution.
+
+    Enterprise demos need hundreds of quiet normals; when the pool under
+    ``max_error`` is short, sample with replacement from the quietest sessions
+    rather than admitting high-error days that flood the SOC with HIGH risk.
+    """
     if n <= 0:
         return []
     shuffled = list(pool)
     rng.shuffle(shuffled)
     if max_error is None or model_path is None:
-        return shuffled[:n]
+        return shuffled[:n] if len(shuffled) >= n else [rng.choice(shuffled) for _ in range(n)]
 
-    # Score a candidate pool (up to 8x needed) and keep errors <= max_error.
-    candidates = shuffled[: min(len(shuffled), max(n * 8, 40))]
+    # Score a wide candidate set (full pool when building large demos).
+    candidate_cap = len(shuffled) if n >= 100 else min(len(shuffled), max(n * 8, 40))
+    candidates = shuffled[:candidate_cap]
     errors = _score_sequences([c[2] for c in candidates], model_path=model_path)
     if not errors:
-        return shuffled[:n]
+        return shuffled[:n] if len(shuffled) >= n else [rng.choice(shuffled) for _ in range(n)]
 
     accepted = [
         session
         for session, err in zip(candidates, errors, strict=True)
         if err <= max_error
     ]
+    rng.shuffle(accepted)
     if len(accepted) >= n:
         return accepted[:n]
-    # Fill remainder with lowest-error candidates if the bulk filter is tight.
-    ranked = sorted(zip(candidates, errors, strict=True), key=lambda row: row[1])
-    out = list(accepted)
-    for session, _err in ranked:
-        if session in out:
-            continue
-        out.append(session)
-        if len(out) >= n:
-            break
-    return out[:n]
+
+    # Prefer lowest-error sessions; allow replacement so we never promote
+    # high-reconstruction normals into the "quiet" bucket.
+    ranked = [session for session, _err in sorted(
+        zip(candidates, errors, strict=True), key=lambda row: row[1]
+    )]
+    quiet = accepted if accepted else ranked[: max(1, min(len(ranked), max(n, 40)))]
+    if len(quiet) >= n:
+        return quiet[:n]
+    return [rng.choice(quiet) for _ in range(n)]
 
 
 def _mild_anomaly_features(index: int, event_sequence: list[str]) -> dict[str, Any]:
-    """Elevated features that stay under every attack-classification threshold."""
+    """Elevated features that stay under every attack-classification threshold.
+
+    Kept intentionally modest so mild rows land MEDIUM (investigate), not HIGH.
+    """
     base = _quiet_normal_features(index, event_sequence)
     base.update(
         {
-            "auth_failure_rate": 0.18,
+            "auth_failure_rate": 0.12,
             "max_failed_login_streak": 2,
             "location_change_count": 2,
             "unique_location_count": 2,
-            "resource_entropy": 1.4,
-            "after_hours_event_count": 4,
-            "download_size_mb_sum": 45.0,
+            "resource_entropy": 1.05,
+            "after_hours_event_count": 3,
+            "download_size_mb_sum": 28.0,
             "mass_download_event_count": 0,
-            "vpn_usage_ratio": 0.4,
-            "burst_max_5min": 12.0,
-            "active_duration_hours": 9.5,
-            "file_access_ratio": 0.28,
-            "night_event_count": 2,
-            "file_access_count": 7,
+            "vpn_usage_ratio": 0.32,
+            "burst_max_5min": 9.0,
+            "active_duration_hours": 9.0,
+            "file_access_ratio": 0.24,
+            "night_event_count": 1,
+            "file_access_count": 6,
         }
     )
     return base
@@ -402,7 +449,90 @@ def _attack_specs() -> list[tuple[str, tuple[str, ...], dict[str, Any]]]:
                 "burst_max_5min": 18.0,
             },
         ),
+        (
+            "Lateral Movement",
+            LATERAL_MOVEMENT_SEQUENCE,
+            {
+                "unique_location_count": 4,
+                "location_change_count": 5,
+                "country_change_count": 0,
+                "auth_failure_rate": 0.05,
+                "max_failed_login_streak": 0,
+                "resource_entropy": 2.3,
+                "vpn_usage_ratio": 0.4,
+                "after_hours_event_count": 5,
+                "burst_max_5min": 16.0,
+                "download_size_mb_sum": 25.0,
+                "mass_download_event_count": 0,
+                "active_duration_hours": 10.0,
+            },
+        ),
+        (
+            "Credential Stuffing",
+            BRUTE_FORCE_SEQUENCE,
+            {
+                "auth_failure_rate": 0.35,
+                "login_count": 14,
+                "max_failed_login_streak": 3,
+                "unique_device_count": 3,
+                "device_entropy": 0.9,
+                "burst_max_5min": 28.0,
+                "vpn_usage_ratio": 0.25,
+                "after_hours_event_count": 3,
+                "download_size_mb_sum": 8.0,
+                "mass_download_event_count": 0,
+            },
+        ),
+        (
+            "Device Spoofing",
+            INSIDER_THREAT_SEQUENCE,
+            {
+                "unique_device_count": 6,
+                "device_entropy": 1.6,
+                "auth_failure_rate": 0.08,
+                "max_failed_login_streak": 1,
+                "location_change_count": 2,
+                "unique_location_count": 2,
+                "after_hours_event_count": 4,
+                "download_size_mb_sum": 30.0,
+                "mass_download_event_count": 0,
+                "resource_entropy": 1.8,
+                "burst_max_5min": 12.0,
+            },
+        ),
+        (
+            "Low-and-Slow Exfiltration",
+            DATA_EXFILTRATION_SEQUENCE,
+            {
+                "download_size_mb_sum": 48.0,
+                "mass_download_event_count": 0,
+                "burst_max_5min": 5.0,
+                "active_duration_hours": 8.5,
+                "file_access_ratio": 0.32,
+                "file_access_count": 9,
+                "after_hours_event_count": 2,
+                "vpn_usage_ratio": 0.2,
+                "resource_entropy": 1.6,
+                "auth_failure_rate": 0.03,
+                "max_failed_login_streak": 0,
+            },
+        ),
     ]
+
+
+def _pick_sessions(
+    pool: list[tuple[str, str, list[str]]],
+    n: int,
+    rng: random.Random,
+) -> list[tuple[str, str, list[str]]]:
+    """Sample ``n`` sessions with replacement when the pool is smaller than n."""
+    if n <= 0:
+        return []
+    if len(pool) >= n:
+        chosen = list(pool)
+        rng.shuffle(chosen)
+        return chosen[:n]
+    return [rng.choice(pool) for _ in range(n)]
 
 
 def build_demo_feature_vectors(
@@ -412,13 +542,13 @@ def build_demo_feature_vectors(
     simulation_day: str = "2026-03-10",
     seed: int = 42,
     model_path: Path | str | None = None,
+    spread_days: bool = True,
 ) -> list[DemoFeatureVector]:
     """Build a realistic demo batch aligned with Transformer training data.
 
-    Normal sessions are sampled from ``events.csv`` and, when a trained
-    artifact is available, further filtered to reconstruction errors at or
-    below the calibration p80 so they land in LOW — matching the bulk of the
-    training distribution rather than its long tail.
+    Normal sessions are sampled from ``events.csv`` and filtered toward
+    calibration p80 when a trained artifact is available — including large
+    enterprise demos — so quiet workdays stay LOW/MEDIUM instead of HIGH.
     """
     path = Path(events_path) if events_path else _DEFAULT_EVENTS
     artifact_path = (
@@ -429,6 +559,7 @@ def build_demo_feature_vectors(
     rng = random.Random(seed)
     pool = _load_training_sessions(path)
     n_normal, n_mild, n_attack = mix_counts(count)
+    large_batch = count >= 100
 
     p80: float | None = None
     if artifact_path.is_file():
@@ -439,32 +570,45 @@ def build_demo_feature_vectors(
         except Exception:  # noqa: BLE001
             p80 = None
 
+    model_for_filter = artifact_path if artifact_path.is_file() else None
     normals_src = _select_low_error_normals(
         pool,
         n_normal,
         rng,
-        model_path=artifact_path if artifact_path.is_file() else None,
+        model_path=model_for_filter,
         max_error=p80,
     )
-    remaining = [s for s in pool if s not in normals_src]
-    rng.shuffle(remaining)
-    mild_src = remaining[:n_mild]
-    while len(mild_src) < n_mild:
-        mild_src.append(rng.choice(pool))
-    attack_base = remaining[n_mild : n_mild + n_attack]
-    while len(attack_base) < n_attack:
-        attack_base.append(rng.choice(pool))
-    attack_specs = _attack_specs()
+    # Mild / attack bases can reuse the wider pool; normals already hold the quiet set.
+    mild_src = _pick_sessions(pool, n_mild, rng)
+    attack_base = _pick_sessions(pool, n_attack, rng)
 
+    attack_specs = _attack_specs()
     vectors: list[DemoFeatureVector] = []
     emp_index = 1
 
     for i, (_emp, _day, events) in enumerate(normals_src):
         feats = _quiet_normal_features(i, events)
+        if large_batch:
+            # Keep jitter inside quiet behavioural bands (no rule uplift).
+            feats["resource_entropy"] = _jitter(rng, float(feats["resource_entropy"]), 0.05)
+            feats["download_size_mb_sum"] = _jitter(
+                rng, float(feats["download_size_mb_sum"]), 1.5
+            )
+            feats["active_duration_hours"] = _jitter(
+                rng, float(feats["active_duration_hours"]), 0.4
+            )
+            feats["burst_max_5min"] = min(
+                5.5, _jitter(rng, float(feats["burst_max_5min"]), 0.6)
+            )
+        day = (
+            _assign_day(rng, simulation_day)
+            if spread_days and large_batch
+            else simulation_day
+        )
         vectors.append(
             DemoFeatureVector(
-                employee_id=f"EMP-{emp_index:03d}",
-                simulation_day=simulation_day,
+                employee_id=_employee_id(emp_index),
+                simulation_day=day,
                 event_sequence=list(events),
                 demo_kind="normal",
                 **feats,
@@ -475,10 +619,22 @@ def build_demo_feature_vectors(
     for i, (_emp, _day, events) in enumerate(mild_src):
         seq = _mild_anomaly_sequence(events, variant=i)
         feats = _mild_anomaly_features(i, seq)
+        if large_batch:
+            feats["after_hours_event_count"] = int(feats["after_hours_event_count"]) + rng.randint(
+                0, 1
+            )
+            feats["download_size_mb_sum"] = _jitter(
+                rng, float(feats["download_size_mb_sum"]), 4.0
+            )
+        day = (
+            _assign_day(rng, simulation_day)
+            if spread_days and large_batch
+            else simulation_day
+        )
         vectors.append(
             DemoFeatureVector(
-                employee_id=f"EMP-{emp_index:03d}",
-                simulation_day=simulation_day,
+                employee_id=_employee_id(emp_index),
+                simulation_day=day,
                 event_sequence=seq,
                 demo_kind="mild_anomaly",
                 **feats,
@@ -491,14 +647,27 @@ def build_demo_feature_vectors(
         seq = _attack_session_sequence(events, attack_seq)
         feats = _quiet_normal_features(i, seq)
         feats.update(overrides)
+        if large_batch:
+            if "download_size_mb_sum" in feats:
+                feats["download_size_mb_sum"] = _jitter(
+                    rng, float(feats["download_size_mb_sum"]), 12.0
+                )
+            if "after_hours_event_count" in feats:
+                feats["after_hours_event_count"] = max(
+                    0,
+                    int(feats["after_hours_event_count"]) + rng.randint(-1, 2),
+                )
         feats["total_events"] = len(seq)
+        extra: dict[str, Any] = {"attack_scenario": label}
+        if label == "Low-and-Slow Exfiltration":
+            extra["median_idle_gap_sec"] = 900.0
         vectors.append(
             DemoFeatureVector(
-                employee_id=f"EMP-{emp_index:03d}",
+                employee_id=_employee_id(emp_index),
                 simulation_day=simulation_day,
                 event_sequence=seq,
                 demo_kind="confirmed_attack",
-                extra={"attack_scenario": label},
+                extra=extra,
                 **feats,
             )
         )

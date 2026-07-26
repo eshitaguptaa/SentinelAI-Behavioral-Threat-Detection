@@ -1,7 +1,7 @@
 import { useRef, useState, type DragEvent, type KeyboardEvent } from "react";
-import { Upload } from "lucide-react";
+import { Download, Play, Upload } from "lucide-react";
 
-import { downloadFeatureVectorTemplate } from "../services/excelImport";
+import { downloadDemoSampleWorkbook } from "../services/api";
 import styles from "../pages/Dashboard.module.css";
 
 interface ExcelUploadZoneProps {
@@ -98,23 +98,29 @@ export default function ExcelUploadZone({
             <Upload size={14} aria-hidden />
             Choose file
           </button>
-          <button
-            type="button"
-            className={styles.uploadGhost}
-            disabled={disabled}
-            onClick={() => downloadFeatureVectorTemplate()}
-          >
-            Template
-          </button>
           {onUseSample ? (
-            <button
-              type="button"
-              className={styles.uploadGhost}
-              disabled={disabled}
-              onClick={() => void onUseSample()}
-            >
-              Sample data
-            </button>
+            <>
+              <button
+                type="button"
+                className={styles.uploadGhost}
+                disabled={disabled}
+                title="Download the exact Excel workbook used by Run sample"
+                onClick={() => downloadDemoSampleWorkbook()}
+              >
+                <Download size={14} aria-hidden />
+                Download sample
+              </button>
+              <button
+                type="button"
+                className={styles.uploadGhost}
+                disabled={disabled}
+                title="Analyse the built-in sample batch"
+                onClick={() => void onUseSample()}
+              >
+                <Play size={14} aria-hidden />
+                Run sample
+              </button>
+            </>
           ) : null}
         </div>
 

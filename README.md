@@ -333,12 +333,17 @@ The Investigate page is the analyst dossier:
 
 | Asset | Location |
 |-------|----------|
-| Built-in SOC sample | `frontend/src/data/demoFeatureVectors.json` |
+| Built-in SOC sample (500 employees) | `frontend/src/data/demoFeatureVectors.json` |
+| Offline sample workbook | `datasets/sentinelai_sample_batch.xlsx` (+ `.csv`) |
+| Kill-chain campaign stages (EMP-K01) | `frontend/src/data/demoCampaignChain.json` |
+| Regenerate enterprise sample | `python scripts/export_enterprise_demo.py` |
 | Employee roster | `datasets/employees.csv` |
 | Behaviour profiles | `datasets/behaviour_profiles.csv` |
 | Event log (train/calibrate/eval) | `datasets/events.csv` |
 | Clean baseline (pre-injection) | `datasets/events_baseline.csv` |
 | Brief-schema access logs | `datasets/access_logs.csv` |
+
+**Enterprise sample mix:** 470 normal / 15 mild anomalies / 15 confirmed attacks across 5 simulation days (2026-03-06…10), with eight attack scenario types. Quiet normals are filtered to low Transformer reconstruction error so HIGH/CRITICAL stay in a realistic SOC range (~5–8% of the batch). **Run sample** in the UI appends the EMP-K01 kill-chain campaign for Investigate.
 
 ---
 

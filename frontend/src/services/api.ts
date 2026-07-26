@@ -11,6 +11,10 @@ import type {
   PredictBatchResponse,
   PredictResult,
 } from "../types/models";
+import {
+  downloadFeatureVectorsWorkbook,
+  SAMPLE_WORKBOOK_NAME,
+} from "./excelImport";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.toString() || "http://127.0.0.1:8000";
@@ -107,69 +111,89 @@ type DemoVectorRecord = FeatureVectorPayload & {
   campaign_id?: string;
 };
 
+/** Default enterprise sample size (matches exported demoFeatureVectors.json). */
+export const DEMO_SAMPLE_SIZE = 500;
+
+const BATCH_CHUNK_SIZE = 40;
+
 /**
  * Enterprise-realistic demo vectors for the SOC dashboard.
  *
- * Mix (~24 users): ~75% normal, ~10% mild behavioural anomalies (no attack
- * rule), ~15% confirmed attacks. Appends a 3-stage EMP-K01 kill chain so
- * Investigate can expand one alert into a campaign timeline.
- *
  * Source of truth: ``synthetic_data/demo/session_generator.py``
- * (regenerate JSON via ``scripts/export_and_audit_demo.py``).
+ * Regenerate with ``python scripts/export_enterprise_demo.py`` (500 employees,
+ * ~94% normal / 3% mild / 3% attacks; quiet normals filtered to low recon error).
+ * Appends the EMP-K01 kill-chain campaign stages for Investigate.
  */
 export function buildDemoFeatureVectors(
-  count = 24,
-  simulationDay = "2026-03-10",
+  count = DEMO_SAMPLE_SIZE,
 ): FeatureVectorPayload[] {
   const source = demoFeatureVectors as DemoVectorRecord[];
   if (!Array.isArray(source) || source.length === 0) {
     throw new Error(
-      "demoFeatureVectors.json is empty. Run scripts/export_and_audit_demo.py",
+      "demoFeatureVectors.json is empty. Run scripts/export_enterprise_demo.py",
     );
   }
 
-  const normals = source.filter((row) => row.demo_kind === "normal");
-  const mild = source.filter((row) => row.demo_kind === "mild_anomaly");
-  const attacks = source.filter((row) => row.demo_kind === "confirmed_attack");
-
-  const nAttack = Math.max(1, Math.round(count * 0.15));
-  const nMild = Math.max(1, Math.round(count * 0.1));
-  const nNormal = Math.max(1, count - nAttack - nMild);
-
-  const pick = (pool: DemoVectorRecord[], n: number, offset: number) => {
-    const out: DemoVectorRecord[] = [];
-    for (let i = 0; i < n; i += 1) {
-      out.push(pool[(offset + i) % pool.length] ?? pool[0]);
-    }
-    return out;
-  };
-
-  const selected = [
-    ...pick(normals.length ? normals : source, nNormal, 0),
-    ...pick(mild.length ? mild : source, nMild, 3),
-    ...pick(attacks.length ? attacks : source, nAttack, 7),
-  ].slice(0, count);
-
-  const remapped = selected.map((row, index) => {
-    const { demo_kind: _kind, attack_scenario: _scenario, ...rest } = row;
-    return {
-      ...rest,
-      employee_id: `EMP-${String(index + 1).padStart(3, "0")}`,
-      simulation_day: simulationDay,
-      event_sequence: [...(row.event_sequence ?? [])],
-    };
-  });
-
-  const chain = (demoCampaignChain as DemoVectorRecord[]).map((row) => {
+  const stripMeta = (row: DemoVectorRecord): FeatureVectorPayload => {
     const { demo_kind: _kind, attack_scenario: _scenario, ...rest } = row;
     return {
       ...rest,
       employee_id: row.employee_id,
       simulation_day: row.simulation_day,
-      campaign_id: row.campaign_id,
       event_sequence: [...(row.event_sequence ?? [])],
+      ...(row.campaign_id ? { campaign_id: row.campaign_id } : {}),
     };
-  });
+  };
+
+  // Prefer the pre-exported enterprise corpus as-is (unique EMP ids + mix).
+  let selected: DemoVectorRecord[];
+  if (count >= source.length) {
+    selected = source;
+  } else {
+    const normals = source.filter((row) => row.demo_kind === "normal");
+    const mild = source.filter((row) => row.demo_kind === "mild_anomaly");
+    const attacks = source.filter((row) => row.demo_kind === "confirmed_attack");
+    const nAttack = Math.max(1, Math.round(count * 0.1));
+    const nMild = Math.max(1, Math.round(count * 0.08));
+    const nNormal = Math.max(1, count - nAttack - nMild);
+    const pick = (pool: DemoVectorRecord[], n: number) =>
+      pool.slice(0, Math.min(n, pool.length));
+    selected = [
+      ...pick(normals.length ? normals : source, nNormal),
+      ...pick(mild.length ? mild : source, nMild),
+      ...pick(attacks.length ? attacks : source, nAttack),
+    ].slice(0, count);
+  }
+
+  const remapped = selected.map(stripMeta);
+
+  const chain = (demoCampaignChain as DemoVectorRecord[]).map(stripMeta);
 
   return [...remapped, ...chain];
 }
+
+/** Score a large demo batch in chunks to avoid gateway / UI timeouts. */
+export async function predictBatchChunked(
+  featureVectors: FeatureVectorPayload[],
+  chunkSize = BATCH_CHUNK_SIZE,
+): Promise<PredictResult[]> {
+  if (featureVectors.length <= chunkSize) {
+    return predictBatch(featureVectors);
+  }
+  const results: PredictResult[] = [];
+  for (let i = 0; i < featureVectors.length; i += chunkSize) {
+    const chunk = featureVectors.slice(i, i + chunkSize);
+    const partial = await predictBatch(chunk);
+    results.push(...partial);
+  }
+  return results;
+}
+
+/** Download the exact workbook used by ``Run sample`` (including EMP-K01). */
+export function downloadDemoSampleWorkbook(): void {
+  downloadFeatureVectorsWorkbook(
+    buildDemoFeatureVectors(DEMO_SAMPLE_SIZE),
+    SAMPLE_WORKBOOK_NAME,
+  );
+}
+

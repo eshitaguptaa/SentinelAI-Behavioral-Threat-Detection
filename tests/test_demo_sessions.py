@@ -32,6 +32,21 @@ def test_mix_counts_for_24() -> None:
     assert mix_counts(24) == (18, 2, 4)
 
 
+def test_mix_counts_for_500() -> None:
+    assert mix_counts(500) == (470, 15, 15)
+
+
+def test_enterprise_demo_has_500_unique_employees() -> None:
+    vectors = build_demo_feature_vectors(500, events_path=EVENTS, model_path=None)
+    counts = kind_counts(vectors)
+    assert len(vectors) == 500
+    assert len({v.employee_id for v in vectors}) == 500
+    assert counts["normal"] == 470
+    assert counts["mild_anomaly"] == 15
+    assert counts["confirmed_attack"] == 15
+    assert len({v.simulation_day for v in vectors}) >= 2
+
+
 def test_demo_mix_and_normal_vocabulary() -> None:
     vectors = build_demo_feature_vectors(24, events_path=EVENTS, model_path=MODEL)
     counts = kind_counts(vectors)

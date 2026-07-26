@@ -42,17 +42,41 @@ function SocShell() {
             </div>
           ) : null}
 
-          {loading || hydrating ? (
-            <div className={styles.loading} role="status" aria-live="polite">
-              <span className={styles.spinner} aria-hidden />
-              {hydrating
-                ? "Restoring saved session…"
-                : "Running SentinelAI pipeline across feature vectors…"}
-            </div>
-          ) : null}
-
           <Outlet />
         </main>
+
+        {loading || hydrating ? (
+          <div
+            className={styles.loadingOverlay}
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
+          >
+            <div className={styles.loadingPanel}>
+              <div className={styles.loadingOrb} aria-hidden>
+                <span className={styles.loadingRing} />
+                <span className={styles.loadingRing} />
+                <span className={styles.loadingCore} />
+              </div>
+              <p className={styles.loadingEyebrow}>SentinelAI</p>
+              <h2 className={styles.loadingTitle}>
+                {hydrating ? "Restoring your workspace" : "Scoring behavioural risk"}
+              </h2>
+              <p className={styles.loadingCopy}>
+                {hydrating
+                  ? "Bringing back the last analysis session…"
+                  : "Running detection, risk fusion, and case prep. This may take a moment."}
+              </p>
+              {!hydrating ? (
+                <ul className={styles.loadingStages} aria-hidden>
+                  <li>Detect</li>
+                  <li>Fuse risk</li>
+                  <li>Explain</li>
+                </ul>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

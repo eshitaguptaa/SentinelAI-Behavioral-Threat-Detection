@@ -39,7 +39,8 @@ export default function UploadPage() {
           <div className={styles.introRule} />
           <p className={styles.introLead}>
             Bring a workbook of employee-day activity into SentinelAI — we score
-            anomalies, rank risk, and open a clear path to investigate.
+            anomalies, rank risk, and open a clear path to investigate. The built-in
+            sample covers 500 employees across a realistic normal / anomaly mix.
           </p>
           <ul className={styles.introPrompts}>
             <li>
@@ -52,11 +53,11 @@ export default function UploadPage() {
             </li>
             <li>
               <span>03</span>
-              Need a format? Grab the template
+              Download the 500-employee sample workbook
             </li>
             <li>
               <span>04</span>
-              No file to upload? Click Sample data
+              Or click Run sample to analyse all 500 employees immediately
             </li>
           </ul>
           {offline ? (

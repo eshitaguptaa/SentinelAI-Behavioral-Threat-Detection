@@ -10,9 +10,11 @@ import {
 
 import {
   buildDemoFeatureVectors,
+  DEMO_SAMPLE_SIZE,
   fetchAppInfo,
   fetchHealth,
   predictBatch,
+  predictBatchChunked,
   toUserFriendlyError,
 } from "../services/api";
 import {
@@ -30,6 +32,9 @@ import {
 import {
   ExcelImportError,
   parseFeatureVectorsFromExcel,
+  BUILT_IN_SAMPLE_LABEL,
+  downloadFeatureVectorsWorkbook,
+  SAMPLE_WORKBOOK_NAME,
 } from "../services/excelImport";
 import type {
   BackendStatus,
@@ -126,6 +131,8 @@ interface AnalysisContextValue {
   selectRow: (row: EmployeeRiskRow) => void;
   clearError: () => void;
   clearResults: () => void;
+  downloadActiveWorkbook: () => boolean;
+  canDownloadWorkbook: boolean;
 }
 
 const AnalysisContext = createContext<AnalysisContextValue | null>(null);
@@ -224,7 +231,10 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
       setError(null);
       setErrorTitle(null);
       try {
-        const results = await predictBatch(vectors);
+        const results =
+          vectors.length > 40
+            ? await predictBatchChunked(vectors)
+            : await predictBatch(vectors);
         const nextRows = toRows(results).sort((a, b) => b.risk_score - a.risk_score);
         // Prefer EMP-K01 kill-chain stage for the demo path when present.
         const killChainRow = nextRows.find(
@@ -277,9 +287,32 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
   );
 
   const runSampleAnalysis = useCallback(async () => {
-    const vectors = buildDemoFeatureVectors(24);
-    return analyzeVectors(vectors, "Built-in sample data");
+    const vectors = buildDemoFeatureVectors(DEMO_SAMPLE_SIZE);
+    return analyzeVectors(vectors, BUILT_IN_SAMPLE_LABEL);
   }, [analyzeVectors]);
+
+  const downloadActiveWorkbook = useCallback(() => {
+    if (!loadedVectors?.length) return false;
+    const isSample = sourceFileName === BUILT_IN_SAMPLE_LABEL;
+    const safeName = (sourceFileName ?? "sentinelai_batch")
+      .replace(/[^\w.\-]+/g, "_")
+      .replace(/\.xlsx$/i, "");
+    const filename = isSample
+      ? SAMPLE_WORKBOOK_NAME
+      : `${safeName || "sentinelai_batch"}.xlsx`;
+    try {
+      downloadFeatureVectorsWorkbook(loadedVectors, filename);
+      return true;
+    } catch (err) {
+      showError(
+        "Unable to download workbook",
+        err instanceof Error ? err.message : toUserFriendlyError(err),
+      );
+      return false;
+    }
+  }, [loadedVectors, sourceFileName, showError]);
+
+  const canDownloadWorkbook = Boolean(loadedVectors?.length);
 
   const rerunAnalysis = useCallback(async () => {
     if (!loadedVectors?.length) {
@@ -420,6 +453,8 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
       selectRow,
       clearError,
       clearResults,
+      downloadActiveWorkbook,
+      canDownloadWorkbook,
     }),
     [
       backendStatus,
@@ -446,6 +481,8 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
       selectRow,
       clearError,
       clearResults,
+      downloadActiveWorkbook,
+      canDownloadWorkbook,
     ],
   );
 

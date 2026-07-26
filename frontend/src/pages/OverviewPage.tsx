@@ -1,9 +1,10 @@
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { ArrowRight, RefreshCw, Upload } from "lucide-react";
+import { ArrowRight, Download, RefreshCw, Upload } from "lucide-react";
 
 import StatsCard from "../components/StatsCard";
 import StatusRefreshButton from "../components/StatusRefreshButton";
 import { useAnalysis } from "../contexts/AnalysisContext";
+import { BUILT_IN_SAMPLE_LABEL } from "../services/excelImport";
 import styles from "./Dashboard.module.css";
 
 export default function OverviewPage() {
@@ -15,10 +16,13 @@ export default function OverviewPage() {
     backendStatus,
     sourceFileName,
     rerunAnalysis,
+    downloadActiveWorkbook,
+    canDownloadWorkbook,
   } = useAnalysis();
   const navigate = useNavigate();
 
   const offline = backendStatus === "offline";
+  const isSample = sourceFileName === BUILT_IN_SAMPLE_LABEL;
 
   if (hydrating) {
     return (
@@ -49,6 +53,18 @@ export default function OverviewPage() {
         </div>
         <div className={styles.actions}>
           <StatusRefreshButton />
+          {canDownloadWorkbook ? (
+            <button
+              type="button"
+              className={styles.secondaryBtn}
+              onClick={() => downloadActiveWorkbook()}
+              disabled={loading}
+              title="Download the Excel workbook this report was scored from"
+            >
+              <Download size={14} aria-hidden />
+              {isSample ? "Download sample" : "Download workbook"}
+            </button>
+          ) : null}
           <button
             type="button"
             className={styles.secondaryBtn}
@@ -88,6 +104,17 @@ export default function OverviewPage() {
             <span className={styles.chip}>{stats.confirmed} confirmed</span>
             <span className={styles.chip}>{stats.critical} critical</span>
             <span className={styles.chip}>{stats.high} high</span>
+            {isSample ? (
+              <button
+                type="button"
+                className={styles.chipAction}
+                onClick={() => downloadActiveWorkbook()}
+                disabled={!canDownloadWorkbook || loading}
+              >
+                <Download size={12} aria-hidden />
+                Download sample workbook
+              </button>
+            ) : null}
           </div>
         </div>
 

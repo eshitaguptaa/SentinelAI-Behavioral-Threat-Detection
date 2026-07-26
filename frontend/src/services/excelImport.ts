@@ -294,10 +294,65 @@ export function downloadFeatureVectorTemplate(): void {
     },
   ];
 
-  const worksheet = XLSX.utils.json_to_sheet(sample, {
-    header: [...EXCEL_TEMPLATE_COLUMNS],
-  });
+  downloadFeatureVectorsWorkbook(
+    sample as FeatureVectorPayload[],
+    "sentinelai_feature_vectors_template.xlsx",
+  );
+}
+
+const SAMPLE_WORKBOOK_NAME = "sentinelai_sample_batch.xlsx";
+export const BUILT_IN_SAMPLE_LABEL = "Built-in sample data";
+
+function vectorToSheetRow(
+  vector: FeatureVectorPayload,
+): Record<string, string | number> {
+  const row: Record<string, string | number> = {};
+  for (const column of EXCEL_TEMPLATE_COLUMNS) {
+    const value = vector[column];
+    if (column === "event_sequence") {
+      if (Array.isArray(value)) {
+        row[column] = value.join("|");
+      } else if (value == null) {
+        row[column] = "";
+      } else {
+        row[column] = String(value);
+      }
+      continue;
+    }
+    if (typeof value === "number" && Number.isFinite(value)) {
+      row[column] = value;
+    } else if (value == null) {
+      row[column] = "";
+    } else {
+      row[column] = String(value);
+    }
+  }
+  const campaignId = vector.campaign_id;
+  if (typeof campaignId === "string" && campaignId.trim()) {
+    row.campaign_id = campaignId.trim();
+  }
+  return row;
+}
+
+/** Export feature vectors as an Excel workbook users can inspect and re-upload. */
+export function downloadFeatureVectorsWorkbook(
+  vectors: FeatureVectorPayload[],
+  filename = "sentinelai_feature_vectors.xlsx",
+): void {
+  if (!vectors.length) {
+    throw new ExcelImportError("No feature vectors available to download.");
+  }
+
+  const rows = vectors.map(vectorToSheetRow);
+  const hasCampaign = rows.some((row) => "campaign_id" in row);
+  const header = hasCampaign
+    ? [...EXCEL_TEMPLATE_COLUMNS, "campaign_id"]
+    : [...EXCEL_TEMPLATE_COLUMNS];
+
+  const worksheet = XLSX.utils.json_to_sheet(rows, { header });
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "feature_vectors");
-  XLSX.writeFile(workbook, "sentinelai_feature_vectors_template.xlsx");
+  XLSX.writeFile(workbook, filename);
 }
+
+export { SAMPLE_WORKBOOK_NAME };
