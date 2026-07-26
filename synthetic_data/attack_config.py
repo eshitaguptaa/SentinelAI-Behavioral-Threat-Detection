@@ -18,7 +18,8 @@ class AttackConfig:
 
     Attributes:
         attack_ratio: Fraction of eligible employees selected as attack
-            targets (0.0–1.0). Example: ``0.05`` ≈ 5% of the workforce.
+            targets (0.0–1.0). Default ``0.02`` ≈ 2% keeps labels rare
+            (hackathon guidance: roughly 0.5–3% of sessions).
         random_seed: Seed for reproducible target selection / injection.
         severity_distribution: Relative weights per severity level. Weights
             are normalized at use time and need not sum to 1.0.
@@ -33,7 +34,7 @@ class AttackConfig:
             than this threshold are skipped as targets.
     """
 
-    attack_ratio: float = 0.05
+    attack_ratio: float = 0.02
     random_seed: int | None = 42
     severity_distribution: dict[Severity, float] = field(
         default_factory=lambda: {

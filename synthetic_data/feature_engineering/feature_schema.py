@@ -37,6 +37,9 @@ ATTACK_FEATURE_NAMES: Final[frozenset[str]] = frozenset(
         "after_hours_attack_count",
         "lateral_movement_count",
         "brute_force_count",
+        "device_spoofing_count",
+        "low_and_slow_count",
+        "insider_drift_count",
         "max_attack_confidence",
     }
 )
@@ -223,6 +226,9 @@ class FeatureVector:
     after_hours_attack_count: int = 0
     lateral_movement_count: int = 0
     brute_force_count: int = 0
+    device_spoofing_count: int = 0
+    low_and_slow_count: int = 0
+    insider_drift_count: int = 0
     max_attack_confidence: float = 0.0
 
     # --- Statistical behaviour ---

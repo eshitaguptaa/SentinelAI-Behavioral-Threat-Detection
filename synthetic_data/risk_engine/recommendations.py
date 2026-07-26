@@ -28,6 +28,14 @@ _ATTACK_RECOMMENDATIONS: Final[dict[str, str]] = {
         "Verify the endpoint; re-enrol a trusted device; revoke untrusted "
         "device certificates."
     ),
+    "Low-and-Slow Exfiltration": (
+        "Correlate multi-day download volume; enable DLP on sensitive "
+        "repositories; review idle-gap file transfers."
+    ),
+    "Insider Drift": (
+        "Confirm role change or project onboarding; tune baselines rather "
+        "than auto-escalating — likely legitimate privilege expansion."
+    ),
     "Insider Activity": (
         "Review sensitive file and USB activity; interview the user; "
         "temporarily restrict high-risk data access."

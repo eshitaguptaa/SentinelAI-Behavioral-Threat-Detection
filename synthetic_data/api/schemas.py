@@ -141,6 +141,28 @@ class AttackClassificationOut(BaseModel):
     matched_signals: list[str]
 
 
+class ColdStartOut(BaseModel):
+    """Cold-start handling metadata for thin-history entities."""
+
+    is_cold_start: bool
+    event_count: int
+    trust: float
+    reason: str
+    adjusted_normalized_score: float
+
+
+class ConceptDriftOut(BaseModel):
+    """Concept-drift EWMA metadata for evolving legitimate behaviour."""
+
+    entity_id: str
+    ewma: float
+    delta: float
+    is_gradual_drift: bool
+    is_abrupt_shift: bool
+    reason: str
+    adjusted_normalized_score: float
+
+
 class PredictResponse(BaseModel):
     """Combined pipeline result for one employee-day."""
 
@@ -154,12 +176,57 @@ class PredictResponse(BaseModel):
     )
     behaviour_insight: BehaviourInsightOut | None = None
     mitre: MitreMappingOut | None = None
+    cold_start: ColdStartOut | None = None
+    concept_drift: ConceptDriftOut | None = None
 
 
 class PredictBatchResponse(BaseModel):
     """Batch pipeline results."""
 
     results: list[PredictResponse]
+
+
+class TimelineEventPayload(BaseModel):
+    """Raw timeline event for streaming / window scoring."""
+
+    model_config = ConfigDict(extra="allow")
+
+    event_id: str = Field(..., min_length=1)
+    employee_id: str = Field(..., min_length=1)
+    timestamp: str = Field(..., description="ISO timestamp")
+    event_type: str = Field(..., min_length=1)
+    device_id: str = "DEV-UNKNOWN"
+    location_id: str = "LOC-UNKNOWN"
+    session_id: str = "SESS-UNKNOWN"
+    resource_id: str | None = None
+    browser: str | None = None
+    operating_system: str | None = None
+    result: str = "success"
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class StreamWindowRequest(BaseModel):
+    """Near-real-time window of events to score as employee-days."""
+
+    events: list[TimelineEventPayload] = Field(
+        ...,
+        min_length=1,
+        description="Buffered stream window (one or more entities)",
+    )
+    flush_every: int = Field(
+        32,
+        ge=1,
+        le=500,
+        description="Soft flush size for StreamingScorer buffering",
+    )
+
+
+class StreamWindowResponse(BaseModel):
+    """Streaming window scoring results."""
+
+    windows_scored: int
+    results: list[PredictResponse]
+    mode: str = "stream-window"
 
 
 class ErrorResponse(BaseModel):

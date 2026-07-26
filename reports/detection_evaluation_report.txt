@@ -1,0 +1,36 @@
+SentinelAI Offline Evaluation Report
+========================================
+Samples: 2134
+
+Binary detection (score >= 50, Insider Drift excluded from positives)
+  Prevalence: 0.0066
+  Precision:  0.0083
+  Recall:     0.3571
+  F1:         0.0162
+  FPR:        0.2825
+  TP/FP/TN/FN: 5/599/1521/9
+
+Analyst alert budgets
+  Top 1%: alerts=21 precision=0.0476 FPR=0.0094 recall=0.0714
+  Top 5%: alerts=107 precision=0.0187 FPR=0.0495 recall=0.1429
+
+Anomaly-type classification (GT-labeled days only)
+  Accuracy: 0.2667 (4/15)
+  - Brute Force: acc=0.0000 (0/1)
+  - Credential Stuffing: acc=0.0000 (0/1)
+  - Device Spoofing: acc=0.0000 (0/1)
+  - Impossible Travel: acc=1.0000 (1/1)
+  - Insider Activity: acc=0.0000 (0/1)
+  - Insider Drift: acc=1.0000 (1/1)
+  - Lateral Movement: acc=0.0000 (0/2)
+  - Low-and-Slow Exfiltration: acc=0.3333 (2/6)
+  - Mass Download: acc=0.0000 (0/1)
+
+Class imbalance notes
+  - Class imbalance: prevalence=0.0066 (14 positives / 2134 samples).
+  - Detection is unsupervised; rarity is handled by calibration percentiles and analyst top-k% budgets rather than class weights.
+  - Insider Drift days are excluded from binary positives (edge case for false-positive tuning).
+
+Insider Drift edge cases
+  Days: 1
+  Flagged anomalous: 0

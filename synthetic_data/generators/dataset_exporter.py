@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import csv
+import json
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
 from synthetic_data.generators.event_factory import TimelineEvent
 from synthetic_data.models import BehaviorProfile, Employee
@@ -15,6 +17,13 @@ def _join_list(values: Sequence[object] | None) -> str:
     if not values:
         return ""
     return "|".join(str(value) for value in values)
+
+
+def _metadata_json(metadata: Mapping[str, Any] | None) -> str:
+    """Serialize full event metadata for round-trip (attack GT included)."""
+    if not metadata:
+        return ""
+    return json.dumps(dict(metadata), default=str, separators=(",", ":"))
 
 
 def export_employees_csv(employees: Sequence[Employee], path: Path) -> Path:
@@ -117,7 +126,11 @@ def export_behaviour_profiles_csv(
 
 
 def export_events_csv(events: Iterable[TimelineEvent], path: Path) -> Path:
-    """Write timeline events to ``events.csv``."""
+    """Write timeline events to ``events.csv``.
+
+    Always writes ``work_mode`` / ``simulation_date`` for backward compatibility
+    and ``metadata_json`` so attack ground-truth fields survive round-trips.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = [
         "event_id",
@@ -133,6 +146,7 @@ def export_events_csv(events: Iterable[TimelineEvent], path: Path) -> Path:
         "result",
         "work_mode",
         "simulation_date",
+        "metadata_json",
     ]
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
@@ -154,6 +168,7 @@ def export_events_csv(events: Iterable[TimelineEvent], path: Path) -> Path:
                     "result": event.result,
                     "work_mode": metadata.get("work_mode", "office"),
                     "simulation_date": metadata.get("simulation_date", ""),
+                    "metadata_json": _metadata_json(metadata),
                 }
             )
     return path

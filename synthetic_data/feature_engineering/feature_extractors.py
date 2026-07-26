@@ -88,6 +88,9 @@ _ATTACK_TYPE_KEYS: tuple[tuple[str, str], ...] = (
     ("AFTER_HOURS_ACCESS", "after_hours_attack_count"),
     ("LATERAL_MOVEMENT", "lateral_movement_count"),
     ("BRUTE_FORCE_LOGIN", "brute_force_count"),
+    ("DEVICE_SPOOFING", "device_spoofing_count"),
+    ("LOW_AND_SLOW_EXFIL", "low_and_slow_count"),
+    ("INSIDER_DRIFT", "insider_drift_count"),
 )
 
 _AUTH_EVENT_TYPES: frozenset[str] = frozenset(

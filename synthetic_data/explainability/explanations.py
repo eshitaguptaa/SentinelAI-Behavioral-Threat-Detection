@@ -25,6 +25,8 @@ _ATTACK_RULE_LABELS: Final[dict[str, str]] = {
     "Lateral Movement": "Lateral-movement pattern matched",
     "Device Spoofing": "Device-spoofing pattern matched",
     "Insider Activity": "Insider-activity pattern matched",
+    "Insider Drift": "Insider-drift (expanding footprint) pattern matched",
+    "Low-and-Slow Exfiltration": "Low-and-slow exfiltration pattern matched",
     "Mass Download": "Mass-download pattern matched",
     "Suspicious VPN Usage": "Suspicious VPN usage pattern matched",
 }

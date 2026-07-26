@@ -10,6 +10,7 @@ from __future__ import annotations
 from synthetic_data.decision_status.schema import (
     NON_SIGNATURE_ATTACK_TYPES,
     FinalStatus,
+    is_confirmable_attack,
     is_signature_attack,
 )
 from synthetic_data.risk_engine.config import DEFAULT_RISK_CONFIG, RiskEngineConfig
@@ -67,7 +68,7 @@ def derive_final_status(
         }
         score = legacy_map.get(level, 0.0)
 
-    rule_matched = is_signature_attack(attack_type)
+    rule_matched = is_confirmable_attack(attack_type)
     conf_pct = _as_percent(confidence) if confidence is not None else 0.0
 
     if (

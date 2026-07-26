@@ -1,0 +1,135 @@
+{
+  "events_path": "D:\\Applications\\SentinelAI-Behavioral-Threat-Detection\\datasets\\events.csv",
+  "baseline_path": "D:\\Applications\\SentinelAI-Behavioral-Threat-Detection\\datasets\\events_baseline.csv",
+  "access_logs_path": "D:\\Applications\\SentinelAI-Behavioral-Threat-Detection\\datasets\\access_logs.csv",
+  "attack_ratio": 0.1,
+  "random_seed": 42,
+  "attacks_injected": 10,
+  "attacks_planned": 10,
+  "attacks_skipped": 0,
+  "eligible_employees": 100,
+  "selected_targets": 10,
+  "total_input_events": 60449,
+  "total_output_events": 60533,
+  "by_attack_type": {
+    "AFTER_HOURS_ACCESS": 1,
+    "BRUTE_FORCE_LOGIN": 1,
+    "CREDENTIAL_THEFT": 1,
+    "DATA_EXFILTRATION": 1,
+    "DEVICE_SPOOFING": 1,
+    "IMPOSSIBLE_TRAVEL": 1,
+    "INSIDER_DRIFT": 1,
+    "LATERAL_MOVEMENT": 1,
+    "LOW_AND_SLOW_EXFIL": 1,
+    "PRIVILEGE_ESCALATION": 1
+  },
+  "by_severity": {
+    "CRITICAL": 1,
+    "HIGH": 3,
+    "MEDIUM": 6
+  },
+  "attack_types_covered": [
+    "AFTER_HOURS_ACCESS",
+    "BRUTE_FORCE_LOGIN",
+    "CREDENTIAL_THEFT",
+    "DATA_EXFILTRATION",
+    "DEVICE_SPOOFING",
+    "IMPOSSIBLE_TRAVEL",
+    "INSIDER_DRIFT",
+    "LATERAL_MOVEMENT",
+    "LOW_AND_SLOW_EXFIL",
+    "PRIVILEGE_ESCALATION"
+  ],
+  "attack_records": [
+    {
+      "attack_id": "ATK-000001",
+      "employee_id": "EMP-0043",
+      "attack_type": "PRIVILEGE_ESCALATION",
+      "severity": "MEDIUM",
+      "day": "2026-06-08",
+      "description": "Privilege escalation: elevated Contractor to Administrator (Enterprise Admins) via admin portal abuse, then accessed RES-ACTIVE_DIRECTORY, RES-AWS_CONSOLE, RES-IAM_DASHBOARD, RES-SECURITY_POLICIES, RES-SOURCE_CODE_REPOSITORY using Password + VPN from DEV-ADMIN-0001 (Safari 17 / macOS Sonoma) via LOC-LONDON [52.64.38.114] confidence=0.91 duration=882s. details={\"accessed_resources\": [\"RES-ACTIVE_DIRECTORY\", \"RES-AWS_CONSOLE\", \"RES-IAM_DASHBOARD\", \"RES-SECURITY_POLICIES\", \"RES-SOURCE_CODE_REPOSITORY\"], \"admin_group\": \"Enterprise Admins\", \"attack_confidence\": 0.91, \"attack_duration_seconds\": 882, \"attack_end\": \"2026-06-08 11:53:42\", \"attack_start\": \"2026-06-08 11:39:00\", \"attack_summary\": \"Admin Portal \\u2192 Privilege Escalation \\u2192 Domain Admin \\u2192 Source Code Repository \\u2192 IAM Dashboard \\u2192 Active Directory \\u2192 Security Policies \\u2192 Mass Download\", \"attacker_browser\": \"Safari\", \"attacker_device\": \"DEV-ADMIN-0001\", \"attacker_location\": \"LOC-LONDON\", \"attacker_os\": \"macOS Sonoma\", \"attacker_user_agent\": \"Safari 17 / macOS Sonoma\", \"authentication_type\": \"Password + VPN\", \"compromise_method\": \"Privilege Escalation\", \"destination_location\": \"LOC-LONDON\", \"escalation_time\": \"2026-06-08 11:41:23\", \"include_vpn\": false, \"modified_event_ids\": [\"EVT-00060450\", \"EVT-00060451\", \"EVT-00060452\", \"EVT-00060453\", \"EVT-00060454\", \"EVT-00060455\", \"EVT-00060456\", \"EVT-00060457\", \"EVT-00060458\"], \"number_of_inserted_events\": 9, \"origin_location\": \"LOC-SINGAPORE\", \"role_before\": \"Contractor\", \"role_granted\": \"Administrator\", \"session_id\": \"SESS-00013859\", \"session_start\": \"2026-06-08 11:12:00\", \"source_ip\": \"52.64.38.114\"}",
+      "injected_event_count": 9
+    },
+    {
+      "attack_id": "ATK-000002",
+      "employee_id": "EMP-0042",
+      "attack_type": "CREDENTIAL_THEFT",
+      "severity": "MEDIUM",
+      "day": "2026-06-30",
+      "description": "Credential theft: 3 failed password attempts followed by successful SSO Password authentication, VPN access, and sensitive resource use (RES-AWS_CONSOLE, RES-FINANCE_DATABASE, RES-PAYROLL, RES-VPN) from DEV-STUFFER-002 (Ubuntu 24.04 / Firefox) via LOC-BERLIN [185.248.29.149]. details={\"accessed_resources\": [\"RES-AWS_CONSOLE\", \"RES-FINANCE_DATABASE\", \"RES-PAYROLL\", \"RES-VPN\"], \"attack_confidence\": 1.0, \"attack_duration_seconds\": 608, \"attack_end\": \"2026-06-30 08:14:08\", \"attack_start\": \"2026-06-30 08:04:00\", \"attack_summary\": \"Credential stuffing \\u2192 Successful Login \\u2192 VPN \\u2192 Admin Portal \\u2192 Payroll \\u2192 Finance\", \"attacker_browser\": \"Firefox\", \"attacker_device\": \"DEV-STUFFER-002\", \"attacker_location\": \"LOC-BERLIN\", \"attacker_os\": \"Ubuntu 24.04\", \"attacker_user_agent\": \"Firefox 141 / Ubuntu 24.04\", \"authentication_type\": \"SSO Password\", \"compromise_method\": \"Credential Theft\", \"destination_location\": \"LOC-BERLIN\", \"failed_attempt_count\": 3, \"modified_event_ids\": [\"EVT-00060459\", \"EVT-00060460\", \"EVT-00060461\", \"EVT-00060462\", \"EVT-00060463\", \"EVT-00060464\", \"EVT-00060465\", \"EVT-00060466\", \"EVT-00060467\"], \"number_of_inserted_events\": 9, \"origin_location\": \"LOC-HYDERABAD\", \"session_id\": \"SESS-00057749\", \"session_start\": \"2026-06-30 07:51:00\", \"source_ip\": \"185.248.29.149\", \"successful_login_time\": \"2026-06-30 08:05:26\"}",
+      "injected_event_count": 9
+    },
+    {
+      "attack_id": "ATK-000003",
+      "employee_id": "EMP-0092",
+      "attack_type": "IMPOSSIBLE_TRAVEL",
+      "severity": "MEDIUM",
+      "day": "2026-06-25",
+      "description": "Impossible travel: legitimate login from Singapore followed 26 minutes later by remote activity from India on DEV-LAPTOP-IN-003 (Windows 11 / Firefox). details={\"attack_end\": \"2026-06-25 09:43:16\", \"attack_start\": \"2026-06-25 09:34:00\", \"attacker_browser\": \"Firefox\", \"attacker_device\": \"DEV-LAPTOP-IN-003\", \"attacker_os\": \"Windows 11\", \"modified_event_ids\": [\"EVT-00060468\", \"EVT-00060469\", \"EVT-00060470\", \"EVT-00060471\", \"EVT-00060472\", \"EVT-00060473\", \"EVT-00060474\"], \"new_country\": \"India\", \"number_of_inserted_events\": 7, \"original_country\": \"Singapore\", \"session_id\": \"SESS-00049292\", \"session_start\": \"2026-06-25 09:08:00\", \"travel_minutes\": 26}",
+      "injected_event_count": 7
+    },
+    {
+      "attack_id": "ATK-000004",
+      "employee_id": "EMP-0010",
+      "attack_type": "AFTER_HOURS_ACCESS",
+      "severity": "MEDIUM",
+      "day": "2026-06-25",
+      "description": "After-hours access: late_night login at hour 22 with light sensitive access and 25 MB download using Password from DEV-REMOTE-004 (Firefox 142 / Ubuntu 24.04) via LOC-REMOTE [185.95.145.41] confidence=0.99 duration=698s. details={\"attack_confidence\": 0.99, \"attack_duration_seconds\": 698, \"attack_end\": \"2026-06-25 22:27:51\", \"attack_start\": \"2026-06-25 22:16:13\", \"attack_summary\": \"Late Night Login \\u2192 Sensitive Files \\u2192 Mailbox \\u2192 Configuration \\u2192 Financial System \\u2192 Small Download \\u2192 Logout\", \"attacker_browser\": \"Firefox\", \"attacker_device\": \"DEV-REMOTE-004\", \"attacker_location\": \"LOC-REMOTE\", \"attacker_os\": \"Ubuntu 24.04\", \"attacker_user_agent\": \"Firefox 142 / Ubuntu 24.04\", \"authentication_type\": \"Password\", \"compromise_method\": \"After Hours Access\", \"destination_location\": \"LOC-REMOTE\", \"device_type\": \"Laptop\", \"download_size_mb\": 25, \"login_hour\": 22, \"login_time\": \"2026-06-25 22:16:13\", \"logout_time\": \"2026-06-25 22:27:51\", \"modified_event_ids\": [\"EVT-00060475\", \"EVT-00060476\", \"EVT-00060477\", \"EVT-00060478\", \"EVT-00060479\", \"EVT-00060480\", \"EVT-00060481\"], \"night_window\": \"late_night\", \"number_of_inserted_events\": 7, \"origin_location\": \"LOC-LONDON\", \"resources_accessed\": [\"RES-AWS_CONSOLE\", \"RES-CLOUD_STORAGE\", \"RES-EMAIL\", \"RES-FINANCE_DATABASE\", \"RES-SOURCE_CODE_REPOSITORY\"], \"session_id\": \"SESS-00049331\", \"session_start\": \"2026-06-25 10:48:00\", \"source_ip\": \"185.95.145.41\"}",
+      "injected_event_count": 7
+    },
+    {
+      "attack_id": "ATK-000005",
+      "employee_id": "EMP-0066",
+      "attack_type": "BRUTE_FORCE_LOGIN",
+      "severity": "CRITICAL",
+      "day": "2026-06-10",
+      "description": "Brute force login: 8 failed attempts via Credential Stuffing (lockout=none), then successful Corporate VPN authentication and brief resource validation from DEV-SPRAY-0005 (Chrome 138 / Ubuntu 24.04) via LOC-TORONTO [104.198.66.164] confidence=0.92 duration=169s. details={\"attack_confidence\": 0.92, \"attack_duration_seconds\": 169, \"attack_end\": \"2026-06-10 09:34:49\", \"attack_start\": \"2026-06-10 09:32:00\", \"attack_summary\": \"8 Failed Logins \\u2192 Successful Login \\u2192 Resource Validation\", \"attacker_browser\": \"Chrome\", \"attacker_device\": \"DEV-SPRAY-0005\", \"attacker_location\": \"LOC-TORONTO\", \"attacker_os\": \"Ubuntu 24.04\", \"attacker_user_agent\": \"Chrome 138 / Ubuntu 24.04\", \"authentication_type\": \"Corporate VPN\", \"compromise_method\": \"Brute Force Login\", \"destination_location\": \"LOC-TORONTO\", \"failed_attempts\": 8, \"failure_reasons\": [\"Account Disabled\", \"Account Locked\", \"Expired Password\", \"Incorrect Password\", \"Invalid Password\"], \"lockout\": null, \"modified_event_ids\": [\"EVT-00060482\", \"EVT-00060483\", \"EVT-00060484\", \"EVT-00060485\", \"EVT-00060486\", \"EVT-00060487\", \"EVT-00060488\", \"EVT-00060489\", \"EVT-00060490\", \"EVT-00060491\", \"EVT-00060492\"], \"number_of_inserted_events\": 11, \"origin_location\": \"LOC-REMOTE\", \"password_strategy\": \"Credential Stuffing\", \"session_id\": \"SESS-00019088\", \"session_start\": \"2026-06-10 09:11:00\", \"source_ip\": \"104.198.66.164\", \"successful_login_time\": \"2026-06-10 09:33:41\", \"validation_time\": \"2026-06-10 09:34:10\"}",
+      "injected_event_count": 11
+    },
+    {
+      "attack_id": "ATK-000006",
+      "employee_id": "EMP-0051",
+      "attack_type": "DEVICE_SPOOFING",
+      "severity": "MEDIUM",
+      "day": "2026-06-05",
+      "description": "Device spoofing: fingerprint Kali Linux/curl/8.5 mismatched baseline device DEV-0103.",
+      "injected_event_count": 6
+    },
+    {
+      "attack_id": "ATK-000007",
+      "employee_id": "EMP-0002",
+      "attack_type": "LOW_AND_SLOW_EXFIL",
+      "severity": "HIGH",
+      "day": "2026-06-03",
+      "description": "Low-and-slow exfiltration over 8 days (6 active days, 8 drips, 24 MB total).",
+      "injected_event_count": 16
+    },
+    {
+      "attack_id": "ATK-000008",
+      "employee_id": "EMP-0071",
+      "attack_type": "INSIDER_DRIFT",
+      "severity": "MEDIUM",
+      "day": "2026-06-05",
+      "description": "Insider drift edge case: gradual expansion into previously untouched resources during business hours.",
+      "injected_event_count": 3
+    },
+    {
+      "attack_id": "ATK-000009",
+      "employee_id": "EMP-0016",
+      "attack_type": "LATERAL_MOVEMENT",
+      "severity": "HIGH",
+      "day": "2026-06-08",
+      "description": "Lateral movement: pivoted from LAPTOP-042 across DC-02, FIN-DB-01, WS-021, WS-144, FILE-SRV-04 using WMI/WMIC with NTLM Hash from DEV-PIVOT-009 (Chrome 137 / macOS Sonoma) via LOC-NEW_YORK [104.54.220.202] confidence=0.99 duration=656s. details={\"accessed_resources\": [\"RES-ADMIN_SHARE\", \"RES-CREDENTIAL_STORE\", \"RES-NETWORK_SCANNER\", \"RES-SENSITIVE_SERVER\", \"RES-WMI\"], \"attack_confidence\": 0.99, \"attack_duration_seconds\": 656, \"attack_end\": \"2026-06-08 10:03:56\", \"attack_start\": \"2026-06-08 09:53:00\", \"attack_summary\": \"Network Discovery \\u2192 DC-02 \\u2192 WMI \\u2192 Credential Reuse \\u2192 FIN-DB-01 \\u2192 Domain Controller\", \"attacker_browser\": \"Chrome\", \"attacker_device\": \"DEV-PIVOT-009\", \"attacker_location\": \"LOC-NEW_YORK\", \"attacker_os\": \"macOS Sonoma\", \"attacker_user_agent\": \"Chrome 137 / macOS Sonoma\", \"authentication_type\": \"NTLM Hash\", \"compromise_method\": \"Lateral Movement\", \"credential_reuse_time\": \"2026-06-08 09:59:35\", \"destination_location\": \"LOC-NEW_YORK\", \"discovery_time\": \"2026-06-08 09:53:00\", \"modified_event_ids\": [\"EVT-00060518\", \"EVT-00060519\", \"EVT-00060520\", \"EVT-00060521\", \"EVT-00060522\", \"EVT-00060523\", \"EVT-00060524\", \"EVT-00060525\"], \"number_of_inserted_events\": 8, \"origin_host\": \"LAPTOP-042\", \"origin_location\": \"LOC-BENGALURU\", \"pivot_time\": \"2026-06-08 09:54:44\", \"protocol\": \"WMI\", \"remote_tool\": \"WMIC\", \"session_id\": \"SESS-00013820\", \"session_start\": \"2026-06-08 09:36:00\", \"source_ip\": \"104.54.220.202\", \"target_hosts\": [\"DC-02\", \"FIN-DB-01\", \"WS-021\", \"WS-144\", \"FILE-SRV-04\"]}",
+      "injected_event_count": 8
+    },
+    {
+      "attack_id": "ATK-000010",
+      "employee_id": "EMP-0079",
+      "attack_type": "DATA_EXFILTRATION",
+      "severity": "HIGH",
+      "day": "2026-06-22",
+      "description": "Data exfiltration: collected ~460 files (343 MB), staged as legal_bundle.tar.gz (TAR.GZ), uploaded to External FTP [ftp://files.external-transfer.net/inbox] using SSO Password from DEV-ATTACK-000010 (Edge 139 / Windows 11) via LOC-TORONTO [185.168.2.229] confidence=0.92 duration=828s. details={\"accessed_resources\": [\"RES-CLOUD_STORAGE\", \"RES-CRM\", \"RES-EXTERNAL_FTP\", \"RES-PRODUCTION_BACKUPS\"], \"archive_name\": \"legal_bundle.tar.gz\", \"attack_confidence\": 0.92, \"attack_duration_seconds\": 828, \"attack_end\": \"2026-06-22 10:39:48\", \"attack_start\": \"2026-06-22 10:26:00\", \"attack_summary\": \"Sensitive Files \\u2192 Customer Database \\u2192 Bulk Download \\u2192 TAR.GZ Archive \\u2192 External FTP Upload\", \"attacker_browser\": \"Edge\", \"attacker_device\": \"DEV-ATTACK-000010\", \"attacker_location\": \"LOC-TORONTO\", \"attacker_os\": \"Windows 11\", \"attacker_user_agent\": \"Edge 139 / Windows 11\", \"authentication_type\": \"SSO Password\", \"cloud_destination\": \"External FTP\", \"compression\": \"TAR.GZ\", \"compression_time\": \"2026-06-22 10:36:05\", \"compromise_method\": \"Data Exfiltration\", \"destination_location\": \"LOC-TORONTO\", \"discovery_time\": \"2026-06-22 10:26:00\", \"encryption\": \"AES-128\", \"estimated_data_size_mb\": 343, \"files_accessed\": 460, \"modified_event_ids\": [\"EVT-00060526\", \"EVT-00060527\", \"EVT-00060528\", \"EVT-00060529\", \"EVT-00060530\", \"EVT-00060531\", \"EVT-00060532\", \"EVT-00060533\"], \"number_of_inserted_events\": 8, \"origin_location\": \"LOC-SINGAPORE\", \"session_id\": \"SESS-00041178\", \"session_start\": \"2026-06-22 09:39:00\", \"source_ip\": \"185.168.2.229\", \"upload_destination\": \"ftp://files.external-transfer.net/inbox\", \"upload_time\": \"2026-06-22 10:38:19\"}",
+      "injected_event_count": 8
+    }
+  ]
+}

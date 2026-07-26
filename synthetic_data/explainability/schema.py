@@ -28,6 +28,9 @@ FORBIDDEN_EXPLANATION_FIELDS: Final[frozenset[str]] = frozenset(
         "after_hours_attack_count",
         "lateral_movement_count",
         "brute_force_count",
+        "device_spoofing_count",
+        "low_and_slow_count",
+        "insider_drift_count",
         "max_attack_confidence",
     }
 )

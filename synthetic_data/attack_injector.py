@@ -134,8 +134,8 @@ class AttackInjector:
         type_counts: dict[str, int] = {}
         severity_counts: dict[str, int] = {}
         notes: list[str] = [
-            "Attack technique handlers are stubbed; timeline mutations are not "
-            "applied yet. Orchestration, targeting, and result contracts are ready.",
+            "Attack techniques applied via registered injectors; "
+            "ground-truth metadata retained on injected events for evaluation.",
         ]
 
         assert self.injectors is not None

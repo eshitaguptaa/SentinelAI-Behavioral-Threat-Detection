@@ -16,8 +16,11 @@ from . import (
     brute_force,
     credential_theft,
     data_exfiltration,
+    device_spoofing,
     impossible_travel,
+    insider_drift,
     lateral_movement,
+    low_and_slow,
     privilege_escalation,
 )
 
@@ -31,6 +34,9 @@ TECHNIQUE_INJECTORS: dict[AttackType, TechniqueInjector] = {
     AttackType.AFTER_HOURS_ACCESS: after_hours.inject,
     AttackType.LATERAL_MOVEMENT: lateral_movement.inject,
     AttackType.BRUTE_FORCE_LOGIN: brute_force.inject,
+    AttackType.DEVICE_SPOOFING: device_spoofing.inject,
+    AttackType.LOW_AND_SLOW_EXFIL: low_and_slow.inject,
+    AttackType.INSIDER_DRIFT: insider_drift.inject,
 }
 
 

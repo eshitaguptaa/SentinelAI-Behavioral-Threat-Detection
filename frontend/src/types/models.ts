@@ -17,6 +17,8 @@ export type AttackType =
   | "Credential Stuffing"
   | "Device Spoofing"
   | "Lateral Movement"
+  | "Low-and-Slow Exfiltration"
+  | "Insider Drift"
   | "Insider Activity"
   | "Mass Download"
   | "Suspicious VPN Usage"
@@ -123,6 +125,22 @@ export interface PredictResult {
   status: FinalStatus | string;
   behaviour_insight?: BehaviourInsight | null;
   mitre?: MitreMapping | null;
+  cold_start?: {
+    is_cold_start: boolean;
+    event_count: number;
+    trust: number;
+    reason: string;
+    adjusted_normalized_score: number;
+  } | null;
+  concept_drift?: {
+    entity_id: string;
+    ewma: number;
+    delta: number;
+    is_gradual_drift: boolean;
+    is_abrupt_shift: boolean;
+    reason: string;
+    adjusted_normalized_score: number;
+  } | null;
 }
 
 export interface PredictBatchResponse {
@@ -170,6 +188,8 @@ export const ATTACK_COLORS: Record<string, string> = {
   "Credential Stuffing": "#c45cdd",
   "Device Spoofing": "#27a8a0",
   "Lateral Movement": "#e08a3c",
+  "Low-and-Slow Exfiltration": "#7a6bb5",
+  "Insider Drift": "#9aa0a6",
   "Insider Activity": "#d4a017",
   "Mass Download": "#e06b9f",
   "Suspicious VPN Usage": "#6b8cae",

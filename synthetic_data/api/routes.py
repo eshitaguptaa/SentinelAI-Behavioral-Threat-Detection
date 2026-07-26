@@ -19,6 +19,8 @@ from synthetic_data.api.schemas import (
     AnomalyPredictionOut,
     AttackClassificationOut,
     BehaviourInsightOut,
+    ColdStartOut,
+    ConceptDriftOut,
     ErrorResponse,
     HealthResponse,
     MitreMappingOut,
@@ -29,13 +31,23 @@ from synthetic_data.api.schemas import (
     RiskAssessmentOut,
     RiskExplanationOut,
     RootResponse,
+    StreamWindowRequest,
+    StreamWindowResponse,
     SuspiciousEventOut,
+    TimelineEventPayload,
 )
 from synthetic_data.api.validation import (
     ApiValidationError,
     build_feature_vector_with_sequence,
     build_feature_vectors_with_sequences,
     require_fitted_model,
+)
+from synthetic_data.adaptation import (
+    apply_cold_start,
+    assess_cold_start,
+    cold_start_dict,
+    drift_dict,
+    get_drift_tracker,
 )
 from synthetic_data.attack_classification import classify_attack
 from synthetic_data.attack_classification.schema import AttackClassification
@@ -174,6 +186,18 @@ def _mitre_out(attack_type: str) -> MitreMappingOut | None:
     return MitreMappingOut(**payload)
 
 
+def _cold_start_out(payload: dict[str, Any] | None) -> ColdStartOut | None:
+    if not payload:
+        return None
+    return ColdStartOut(**payload)
+
+
+def _drift_out(payload: dict[str, Any] | None) -> ConceptDriftOut | None:
+    if not payload:
+        return None
+    return ConceptDriftOut(**payload)
+
+
 def _predict_vector(
     model: Any,
     vector: FeatureVector,
@@ -201,12 +225,20 @@ def _run_pipeline(
     vector: FeatureVector,
     event_sequence: list[str] | None = None,
 ) -> PredictResponse:
-    """Execute Detector → Attack → Risk → Status → Explainability.
+    """Execute Detector → Cold-start/Drift → Attack → Risk → Status → Explain.
 
     Attack classification runs before risk fusion so rule severity can feed
-    the weighted risk score. Response schema is unchanged.
+    the weighted risk score. Response schema gains optional cold_start /
+    concept_drift metadata without breaking existing clients.
     """
     prediction = _predict_vector(model, vector, event_sequence)
+
+    cold = assess_cold_start(vector, prediction)
+    prediction = apply_cold_start(prediction, cold)
+
+    tracker = get_drift_tracker()
+    drift = tracker.assess(vector.employee_id, float(prediction.normalized_score))
+    prediction = tracker.apply(prediction, drift)
 
     insight: dict[str, Any] | None = None
     if getattr(model, "detector_kind", None) == "transformer" and hasattr(
@@ -223,6 +255,11 @@ def _run_pipeline(
     model_confidence = None
     if insight and insight.get("confidence_score") is not None:
         model_confidence = float(insight["confidence_score"])
+    # Cold-start reduces effective confidence so thin history does not auto-confirm.
+    if cold.is_cold_start and model_confidence is not None:
+        model_confidence = model_confidence * cold.trust
+    elif cold.is_cold_start:
+        model_confidence = cold.trust
 
     assessment = assess_risk(
         prediction,
@@ -252,6 +289,18 @@ def _run_pipeline(
         behaviour_insight=insight,
     )
 
+    # Surface adaptation signals in observations for analysts.
+    if cold.is_cold_start:
+        explanation.observations = [
+            f"Cold-start: {cold.reason}",
+            *list(explanation.observations),
+        ]
+    if drift.is_gradual_drift or drift.is_abrupt_shift:
+        explanation.observations = [
+            f"Concept drift: {drift.reason}",
+            *list(explanation.observations),
+        ]
+
     return PredictResponse(
         prediction=_prediction_out(prediction),
         risk_assessment=_assessment_out(assessment),
@@ -260,6 +309,8 @@ def _run_pipeline(
         status=final_status,
         behaviour_insight=_behaviour_out(insight),
         mitre=_mitre_out(attack.attack_type),
+        cold_start=_cold_start_out(cold_start_dict(cold)),
+        concept_drift=_drift_out(drift_dict(drift)),
     )
 
 
@@ -366,4 +417,99 @@ def predict_batch(request: Request, body: PredictBatchRequest) -> PredictBatchRe
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Batch prediction failed due to an internal error",
+        ) from exc
+
+
+def _timeline_from_payload(payload: TimelineEventPayload):
+    """Convert an HTTP timeline payload into a ``TimelineEvent``."""
+    from datetime import datetime
+
+    from synthetic_data.generators.event_factory import TimelineEvent
+
+    raw_ts = payload.timestamp.strip()
+    try:
+        timestamp = datetime.fromisoformat(raw_ts)
+    except ValueError as exc:
+        raise ApiValidationError(f"Invalid timestamp: {raw_ts}") from exc
+
+    metadata = dict(payload.metadata or {})
+    return TimelineEvent(
+        event_id=payload.event_id,
+        employee_id=payload.employee_id,
+        timestamp=timestamp,
+        event_type=payload.event_type,
+        device_id=payload.device_id,
+        location_id=payload.location_id,
+        session_id=payload.session_id,
+        resource_id=payload.resource_id,
+        browser=payload.browser,
+        operating_system=payload.operating_system,
+        result=payload.result or "success",
+        metadata=metadata,
+    )
+
+
+@router.post(
+    "/predict/stream-window",
+    response_model=StreamWindowResponse,
+    summary="Score a near-real-time event window",
+    description=(
+        "Accept a buffered stream of raw timeline events, aggregate them into "
+        "employee-day FeatureVectors, and run the full inference pipeline. "
+        "Demonstrates streaming feasibility without requiring Kafka/Redis."
+    ),
+    responses={
+        200: {"model": StreamWindowResponse},
+        400: {"model": ErrorResponse},
+        503: {"model": ErrorResponse},
+    },
+    tags=["inference", "streaming"],
+)
+def predict_stream_window(
+    request: Request,
+    body: StreamWindowRequest,
+) -> StreamWindowResponse:
+    """Score one flushed stream window of raw events."""
+    from synthetic_data.feature_engineering import build_feature_vectors
+    from synthetic_data.streaming import StreamingScorer
+
+    model = _get_model(request)
+    try:
+        timeline = [_timeline_from_payload(item) for item in body.events]
+        scored: list[PredictResponse] = []
+
+        def _score_window(window_events: list) -> list[PredictResponse]:
+            if not window_events:
+                return []
+            vectors = build_feature_vectors(window_events)
+            return [_run_pipeline(model, vector, None) for vector in vectors]
+
+        scorer = StreamingScorer(
+            score_fn=_score_window,
+            flush_every=int(body.flush_every),
+        )
+        # Feed events; collect flush outputs, then flush remainder.
+        for result in scorer.on_events(timeline):
+            if isinstance(result, list):
+                scored.extend(result)
+        for result in scorer.flush_all():
+            if isinstance(result, list):
+                scored.extend(result)
+
+        return StreamWindowResponse(
+            windows_scored=len(scored),
+            results=scored,
+            mode="stream-window",
+        )
+    except ApiValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Stream-window prediction failed due to an internal error",
         ) from exc

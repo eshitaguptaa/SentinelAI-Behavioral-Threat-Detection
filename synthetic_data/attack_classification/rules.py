@@ -50,6 +50,18 @@ INSIDER_FILE_RATIO_MIN = 0.40
 VPN_RATIO_MIN = 0.60
 LATERAL_UNIQUE_LOC_MIN = 3
 LATERAL_LOC_CHANGE_MIN = 4
+# Low-and-slow: meaningful volume without a burst signature.
+LOW_SLOW_MB_MIN = 12.0
+LOW_SLOW_MB_MAX = 95.0
+LOW_SLOW_IDLE_GAP_MIN = 600.0
+LOW_SLOW_BURST_MAX = 8
+LOW_SLOW_DURATION_MIN = 3.0
+# Insider drift: expanding footprint without after-hours / mass-download cues.
+DRIFT_RESOURCE_MIN = 6
+DRIFT_ENTROPY_MIN = 1.5
+DRIFT_SWITCH_MIN = 5
+DRIFT_AFTER_HOURS_MAX = 8
+DRIFT_MASS_DOWNLOAD_MAX = 0
 
 
 def rule_impossible_travel(features: BehaviourFeatures) -> RuleMatch:
@@ -150,6 +162,61 @@ def rule_lateral_movement(features: BehaviourFeatures) -> RuleMatch:
     return RuleMatch(False, AttackType.LATERAL_MOVEMENT, 0.0)
 
 
+def rule_low_and_slow(features: BehaviourFeatures) -> RuleMatch:
+    """Low-and-Slow Exfiltration — gradual volume with long idle gaps."""
+    mb = _f(features, "download_size_mb_sum")
+    idle = _f(features, "median_idle_gap_sec")
+    burst = _f(features, "burst_max_5min")
+    duration = _f(features, "active_duration_hours")
+    mass = _f(features, "mass_download_event_count")
+    if (
+        LOW_SLOW_MB_MIN <= mb <= LOW_SLOW_MB_MAX
+        and idle >= LOW_SLOW_IDLE_GAP_MIN
+        and burst <= LOW_SLOW_BURST_MAX
+        and duration >= LOW_SLOW_DURATION_MIN
+        and mass <= 0
+    ):
+        return RuleMatch(
+            True,
+            AttackType.LOW_AND_SLOW_EXFIL,
+            0.81,
+            (
+                f"download_size_mb_sum={mb:.1f}",
+                f"median_idle_gap_sec={idle:.0f}",
+                f"burst_max_5min={burst:.0f}",
+                f"active_duration_hours={duration:.1f}",
+            ),
+        )
+    return RuleMatch(False, AttackType.LOW_AND_SLOW_EXFIL, 0.0)
+
+
+def rule_insider_drift(features: BehaviourFeatures) -> RuleMatch:
+    """Insider Drift — expanding resource footprint without hard attack cues."""
+    resources = _f(features, "unique_resource_count")
+    entropy = _f(features, "resource_entropy")
+    switches = _f(features, "resource_switch_count")
+    after_hours = _f(features, "after_hours_event_count")
+    mass = _f(features, "mass_download_event_count")
+    if (
+        resources >= DRIFT_RESOURCE_MIN
+        and entropy >= DRIFT_ENTROPY_MIN
+        and switches >= DRIFT_SWITCH_MIN
+        and after_hours <= DRIFT_AFTER_HOURS_MAX
+        and mass <= DRIFT_MASS_DOWNLOAD_MAX
+    ):
+        return RuleMatch(
+            True,
+            AttackType.INSIDER_DRIFT,
+            0.62,
+            (
+                f"unique_resource_count={resources:.0f}",
+                f"resource_entropy={entropy:.2f}",
+                f"resource_switch_count={switches:.0f}",
+            ),
+        )
+    return RuleMatch(False, AttackType.INSIDER_DRIFT, 0.0)
+
+
 def rule_insider_activity(features: BehaviourFeatures) -> RuleMatch:
     """Insider Activity — after-hours, long session, file-heavy access."""
     after_hours = _f(features, "after_hours_event_count")
@@ -196,7 +263,9 @@ CLASSIFICATION_RULES: tuple[ClassificationRule, ...] = (
     rule_mass_download,
     rule_device_spoofing,
     rule_lateral_movement,
+    rule_low_and_slow,
     rule_insider_activity,
+    rule_insider_drift,
     rule_suspicious_vpn,
 )
 

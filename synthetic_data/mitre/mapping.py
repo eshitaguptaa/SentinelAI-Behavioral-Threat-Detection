@@ -51,6 +51,22 @@ _MITRE_BY_ATTACK: Final[dict[str, MitreMapping]] = {
         technique_name="Hardware Additions",
         description="Activity from untrusted or suddenly changing device fingerprints.",
     ),
+    "Low-and-Slow Exfiltration": MitreMapping(
+        attack_type="Low-and-Slow Exfiltration",
+        tactic_id="TA0010",
+        tactic_name="Exfiltration",
+        technique_id="T1030",
+        technique_name="Data Transfer Size Limits",
+        description="Gradual small transfers below typical bulk-exfil thresholds.",
+    ),
+    "Insider Drift": MitreMapping(
+        attack_type="Insider Drift",
+        tactic_id="TA0007",
+        tactic_name="Discovery",
+        technique_id="T1526",
+        technique_name="Cloud Service Discovery",
+        description="Legitimate-looking expansion of resource footprint over time.",
+    ),
     "Lateral Movement": MitreMapping(
         attack_type="Lateral Movement",
         tactic_id="TA0008",

@@ -19,6 +19,8 @@ class AttackType(str, Enum):
     CREDENTIAL_STUFFING = "Credential Stuffing"
     DEVICE_SPOOFING = "Device Spoofing"
     LATERAL_MOVEMENT = "Lateral Movement"
+    LOW_AND_SLOW_EXFIL = "Low-and-Slow Exfiltration"
+    INSIDER_DRIFT = "Insider Drift"
     INSIDER_ACTIVITY = "Insider Activity"
     MASS_DOWNLOAD = "Mass Download"
     SUSPICIOUS_VPN_USAGE = "Suspicious VPN Usage"
@@ -51,6 +53,12 @@ ALLOWED_CLASSIFICATION_FEATURES: Final[frozenset[str]] = frozenset(
         "vpn_usage_ratio",
         "unique_location_count",
         "location_change_count",
+        "median_idle_gap_sec",
+        "burst_max_5min",
+        "unique_resource_count",
+        "resource_entropy",
+        "resource_switch_count",
+        "file_access_count",
     }
 )
 

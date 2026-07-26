@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  Unsupervised detection · Deterministic risk · MITRE mapping · SOC case investigation
+  Unsupervised detection · Deterministic risk · MITRE mapping · Cold-start & drift · SOC investigation
 </p>
 
 ---
@@ -34,7 +34,9 @@ It answers a practical SOC question:
 | Risk | Deterministic LOW / MEDIUM / HIGH / CRITICAL scoring |
 | Classification | Rule-based attack types + MITRE ATT&CK mapping |
 | Explainability | Plain-language summary, factors, observations, recommended response |
+| Adaptation | Cold-start score shrink + per-entity EWMA concept-drift tracking |
 | Evidence | Behaviour timeline + interactive attention map |
+| Evaluation | Offline P/R/F1, type accuracy, FPR @ top 1%/5% vs simulator GT |
 | Ingest | Excel workbook upload or built-in sample batch |
 | Surfaces | React SOC app, FastAPI OpenAPI docs, optional Next.js marketing site |
 
@@ -54,7 +56,8 @@ flowchart LR
   C -->|legacy| E[Isolation Forest]
   D --> F[AnomalyPrediction]
   E --> F
-  F --> G[Risk engine]
+  F --> CS[Cold-start + drift]
+  CS --> G[Risk engine]
   G --> H[Attack + MITRE]
   H --> I[Explainability]
   I --> J[FastAPI /predict*]
@@ -65,11 +68,12 @@ flowchart LR
 
 1. Load detector from `SENTINELAI_MODEL_PATH` (never trains at request time)
 2. Score anomaly → normalized score + `is_anomaly`
-3. Risk engine → score, level, recommendation
-4. Attack classification → type + matched signals
-5. MITRE mapping → tactic / technique
-6. Final SOC status → Normal / Suspicious / Under Investigation / Confirmed Threat
-7. Explainability (+ Transformer behaviour insight, timeline errors, attention when available)
+3. Cold-start shrink (thin history) + EWMA concept-drift dampening
+4. Risk engine → score, level, recommendation
+5. Attack classification → type + matched signals
+6. MITRE mapping → tactic / technique
+7. Final SOC status → Normal / Suspicious / Under Investigation / Confirmed Threat
+8. Explainability (+ Transformer behaviour insight, timeline errors, attention when available)
 
 ---
 
@@ -102,10 +106,14 @@ SentinelAI-Behavioral-Threat-Detection/
 ├── run_frontend.py                # Prints frontend run instructions
 ├── train_transformer_model.py     # Train Behavioural Transformer
 ├── calibrate_anomaly.py           # Calibrate score mapping
+├── evaluate_detection.py          # Offline P/R/F1 + FPR@top-k% vs GT
 ├── integration.py                 # IF demo + --prepare-model
 ├── synthetic_data/                # Active Python pipeline + API
 │   ├── generators/                # Enterprise / profiles / timelines
-│   ├── attacks/                   # Attack injection (evaluation data)
+│   ├── attacks/                   # Attack injection (incl. spoofing / low-and-slow / drift)
+│   ├── adaptation/                # Cold-start + concept-drift EWMA
+│   ├── evaluation/                # Imbalanced detection metrics
+│   ├── streaming/                 # Near-real-time scoring adapter
 │   ├── feature_engineering/       # FeatureVector construction
 │   ├── behavioural_transformer/   # Model, train, dataset
 │   ├── anomaly_detection/         # Isolation Forest (legacy)
@@ -328,7 +336,9 @@ The Investigate page is the analyst dossier:
 | Built-in SOC sample | `frontend/src/data/demoFeatureVectors.json` |
 | Employee roster | `datasets/employees.csv` |
 | Behaviour profiles | `datasets/behaviour_profiles.csv` |
-| Event log (train/calibrate) | `datasets/events.csv` |
+| Event log (train/calibrate/eval) | `datasets/events.csv` |
+| Clean baseline (pre-injection) | `datasets/events_baseline.csv` |
+| Brief-schema access logs | `datasets/access_logs.csv` |
 
 ---
 
@@ -339,12 +349,16 @@ The Investigate page is the analyst dossier:
 | Train Transformer | `python train_transformer_model.py` |
 | Train from events CSV | `python train_transformer_model.py --from-events datasets/events.csv` |
 | Calibrate anomaly mapping | `python calibrate_anomaly.py` |
+| Offline eval vs GT labels | `python evaluate_detection.py` |
+| Inject labeled attacks into events CSV | `python regenerate_attack_dataset.py` |
 | Fit Isolation Forest | `python integration.py --prepare-model` |
 | End-to-end Python demo (no UI) | `python integration.py` |
 
 Default Transformer train knobs include epoch count, employee/day sampling, and max sequence length (see script `--help`).
 
-Core code: `synthetic_data/behavioural_transformer/`.
+Offline evaluation writes `reports/detection_evaluation_report.txt` (+ JSON) with precision/recall/F1, anomaly-type accuracy, and FPR at top 1% / 5% alert budgets. Insider Drift days are treated as edge cases (excluded from binary positives).
+
+Core code: `synthetic_data/behavioural_transformer/`. Attack injectors (coverage-guaranteed across all techniques) live under `synthetic_data/attacks/`. Hackathon schema mapping: `synthetic_data/schema_brief.py` → `datasets/access_logs.csv`. Near-real-time scoring: `POST /predict/stream-window`.
 
 ---
 
@@ -448,11 +462,11 @@ Diagrams also in-repo:
 
 ## Future improvements
 
-- Offline evaluation harness vs simulator attack labels  
 - Model registry / versioning for detector artifacts  
 - Alert routing (ticket / email) for CRITICAL cases  
 - Hardened CORS + reverse-proxy deployment guide  
 - Role-based access for multi-analyst deployments  
+- Persist concept-drift EWMA across API restarts (Redis / DB)  
 
 ---
 

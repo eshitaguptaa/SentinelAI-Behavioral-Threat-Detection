@@ -24,7 +24,10 @@ def load_anomaly_model(path: str | Path | None = None) -> Any | None:
     2. File suffix (``.pt`` / ``.pth`` → Transformer, ``.joblib`` → IF)
     3. Try Transformer, then Isolation Forest
     """
-    raw = (path or os.environ.get(MODEL_PATH_ENV, "")).strip()
+    if path is not None:
+        raw = str(path).strip()
+    else:
+        raw = (os.environ.get(MODEL_PATH_ENV, "") or "").strip()
     if not raw:
         return None
     model_path = Path(raw)

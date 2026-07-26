@@ -1,0 +1,128 @@
+{
+  "n_samples": 2134,
+  "binary": {
+    "support_positive": 14,
+    "support_negative": 2120,
+    "true_positives": 5,
+    "false_positives": 599,
+    "true_negatives": 1521,
+    "false_negatives": 9,
+    "precision": 0.008278145695364239,
+    "recall": 0.35714285714285715,
+    "f1": 0.016181229773462785,
+    "specificity": 0.7174528301886792,
+    "false_positive_rate": 0.2825471698113208,
+    "prevalence": 0.006560449859418931
+  },
+  "alert_budgets": [
+    {
+      "top_percent": 1.0,
+      "alert_count": 21,
+      "true_positives": 1,
+      "false_positives": 20,
+      "precision_at_k": 0.047619047619047616,
+      "false_positive_rate_at_k": 0.009433962264150943,
+      "recall_at_k": 0.07142857142857142
+    },
+    {
+      "top_percent": 5.0,
+      "alert_count": 107,
+      "true_positives": 2,
+      "false_positives": 105,
+      "precision_at_k": 0.018691588785046728,
+      "false_positive_rate_at_k": 0.049528301886792456,
+      "recall_at_k": 0.14285714285714285
+    }
+  ],
+  "attack_types": {
+    "overall_accuracy": 0.26666666666666666,
+    "labeled_support": 15,
+    "correct": 4,
+    "per_type": {
+      "Brute Force": {
+        "support": 1,
+        "correct": 0,
+        "accuracy": 0.0
+      },
+      "Credential Stuffing": {
+        "support": 1,
+        "correct": 0,
+        "accuracy": 0.0
+      },
+      "Device Spoofing": {
+        "support": 1,
+        "correct": 0,
+        "accuracy": 0.0
+      },
+      "Impossible Travel": {
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      "Insider Activity": {
+        "support": 1,
+        "correct": 0,
+        "accuracy": 0.0
+      },
+      "Insider Drift": {
+        "support": 1,
+        "correct": 1,
+        "accuracy": 1.0
+      },
+      "Lateral Movement": {
+        "support": 2,
+        "correct": 0,
+        "accuracy": 0.0
+      },
+      "Low-and-Slow Exfiltration": {
+        "support": 6,
+        "correct": 2,
+        "accuracy": 0.3333333333333333
+      },
+      "Mass Download": {
+        "support": 1,
+        "correct": 0,
+        "accuracy": 0.0
+      }
+    },
+    "confusion": {
+      "Low-and-Slow Exfiltration": {
+        "Low-and-Slow Exfiltration": 2,
+        "Insider Drift": 4
+      },
+      "Insider Activity": {
+        "Behavioural Anomaly": 1
+      },
+      "Lateral Movement": {
+        "Impossible Travel": 2
+      },
+      "Credential Stuffing": {
+        "Impossible Travel": 1
+      },
+      "Device Spoofing": {
+        "Insider Drift": 1
+      },
+      "Brute Force": {
+        "Impossible Travel": 1
+      },
+      "Insider Drift": {
+        "Insider Drift": 1
+      },
+      "Mass Download": {
+        "Impossible Travel": 1
+      },
+      "Impossible Travel": {
+        "Impossible Travel": 1
+      }
+    }
+  },
+  "class_imbalance_notes": [
+    "Class imbalance: prevalence=0.0066 (14 positives / 2134 samples).",
+    "Detection is unsupervised; rarity is handled by calibration percentiles and analyst top-k% budgets rather than class weights.",
+    "Insider Drift days are excluded from binary positives (edge case for false-positive tuning)."
+  ],
+  "edge_case_insider_drift": {
+    "days": 1,
+    "flagged_as_anomaly": 0
+  }
+}

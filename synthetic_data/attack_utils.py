@@ -195,26 +195,91 @@ def choose_attack_targets(
 ) -> list[AttackTarget]:
     """Select employee/day/technique assignments for injection.
 
-    Selection respects ``attack_ratio``, enabled types, severity mix,
-    campaign probability, and the multiple-attacks-per-employee flag.
-    This function does not mutate events.
+    Guarantees at least one target per enabled attack type when enough
+    eligible employees exist, then fills remaining slots randomly.
     """
     eligible = eligible_employee_ids(events, config)
     if not eligible:
         return []
 
-    enabled_types = config.resolve_enabled_types()
+    enabled_types = list(config.resolve_enabled_types())
     if not enabled_types:
         return []
 
-    target_count = max(1, int(round(len(eligible) * config.attack_ratio)))
+    # Ensure room for full type coverage when the workforce is large enough.
+    min_for_coverage = len(enabled_types)
+    target_count = max(
+        min_for_coverage,
+        int(round(len(eligible) * config.attack_ratio)),
+    )
     target_count = min(target_count, len(eligible))
-    selected_employees = rng.sample(eligible, k=target_count)
+    if target_count <= 0:
+        return []
+
+    shuffled_employees = list(eligible)
+    rng.shuffle(shuffled_employees)
 
     targets: list[AttackTarget] = []
+    used_employees: set[str] = set()
     campaign_index = 1
 
-    for employee_id in selected_employees:
+    def _append_target(
+        employee_id: str,
+        attack_type: AttackType,
+        *,
+        preferred_day: date | None = None,
+        campaign_id: str | None = None,
+    ) -> bool:
+        active_days = employee_active_days(events, employee_id)
+        if not active_days:
+            return False
+        day = preferred_day if preferred_day in active_days else rng.choice(active_days)
+        severity = choose_severity(config, rng)
+        targets.append(
+            AttackTarget(
+                employee_id=employee_id,
+                day=day,
+                attack_type=attack_type,
+                severity=severity,
+                campaign_id=campaign_id,
+            )
+        )
+        used_employees.add(employee_id)
+        return True
+
+    # Phase 1 — coverage: one guaranteed assignment per enabled technique.
+    type_cycle = list(enabled_types)
+    rng.shuffle(type_cycle)
+    emp_index = 0
+    for attack_type in type_cycle:
+        placed = False
+        while emp_index < len(shuffled_employees):
+            employee_id = shuffled_employees[emp_index]
+            emp_index += 1
+            if employee_id in used_employees and not config.allow_multiple_attacks_per_employee:
+                continue
+            if _append_target(employee_id, attack_type):
+                placed = True
+                break
+        if not placed:
+            # Reuse an eligible employee if workforce is smaller than type count.
+            for employee_id in shuffled_employees:
+                if _append_target(employee_id, attack_type):
+                    break
+
+    # Phase 2 — fill remaining slots up to target_count.
+    remaining_employees = [
+        employee_id
+        for employee_id in shuffled_employees
+        if employee_id not in used_employees
+        or config.allow_multiple_attacks_per_employee
+    ]
+    rng.shuffle(remaining_employees)
+
+    fill_index = 0
+    while len(targets) < target_count and fill_index < len(remaining_employees) * 3:
+        employee_id = remaining_employees[fill_index % len(remaining_employees)]
+        fill_index += 1
         active_days = employee_active_days(events, employee_id)
         if not active_days:
             continue
@@ -230,24 +295,20 @@ def choose_attack_targets(
         if use_campaign:
             campaign_index += 1
 
-        # Prefer distinct days when assigning multiple techniques.
         day_pool = list(active_days)
         rng.shuffle(day_pool)
-
         for slot in range(attack_slots):
+            if len(targets) >= target_count:
+                break
             day = day_pool[slot % len(day_pool)]
             attack_type = choose_attack_type(enabled_types, rng)
-            severity = choose_severity(config, rng)
-            targets.append(
-                AttackTarget(
-                    employee_id=employee_id,
-                    day=day,
-                    attack_type=attack_type,
-                    severity=severity,
-                    campaign_id=campaign_id,
-                )
+            # Skip types already over-represented when coverage is satisfied.
+            _append_target(
+                employee_id,
+                attack_type,
+                preferred_day=day,
+                campaign_id=campaign_id,
             )
-
             if not config.allow_multiple_attacks_per_employee:
                 break
 
@@ -255,7 +316,13 @@ def choose_attack_targets(
 
 
 def load_events_from_csv(path: str | Path) -> list[TimelineEvent]:
-    """Load timeline events previously exported to ``events.csv``."""
+    """Load timeline events previously exported to ``events.csv``.
+
+    Prefers ``metadata_json`` when present (attack GT round-trip). Falls back
+    to legacy ``work_mode`` / ``simulation_date`` columns.
+    """
+    import json
+
     csv_path = Path(path)
     events: list[TimelineEvent] = []
 
@@ -266,11 +333,20 @@ def load_events_from_csv(path: str | Path) -> list[TimelineEvent]:
             timestamp = datetime.fromisoformat(timestamp_raw)
 
             metadata: dict[str, Any] = {}
+            raw_json = (row.get("metadata_json") or "").strip()
+            if raw_json:
+                try:
+                    parsed = json.loads(raw_json)
+                    if isinstance(parsed, dict):
+                        metadata = dict(parsed)
+                except json.JSONDecodeError:
+                    metadata = {}
+
             work_mode = (row.get("work_mode") or "").strip()
             simulation_date = (row.get("simulation_date") or "").strip()
-            if work_mode:
+            if work_mode and "work_mode" not in metadata:
                 metadata["work_mode"] = work_mode
-            if simulation_date:
+            if simulation_date and "simulation_date" not in metadata:
                 metadata["simulation_date"] = simulation_date
 
             events.append(
