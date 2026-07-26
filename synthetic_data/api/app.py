@@ -26,12 +26,22 @@ _DEFAULT_ORIGINS = (
 )
 
 
+def _normalize_origin(raw: str) -> str:
+    """Strip quotes/whitespace/trailing slash so Railway paste typos still match."""
+    origin = raw.strip().strip("\"'").rstrip("/")
+    return origin
+
+
 def _cors_origins() -> list[str]:
     """Local defaults plus optional comma-separated ``CORS_ALLOW_ORIGINS``."""
     origins = list(_DEFAULT_ORIGINS)
     extra = (os.environ.get("CORS_ALLOW_ORIGINS") or "").strip()
     if extra:
-        origins.extend(item.strip() for item in extra.split(",") if item.strip())
+        origins.extend(
+            _normalize_origin(item)
+            for item in extra.split(",")
+            if _normalize_origin(item)
+        )
     seen: set[str] = set()
     unique: list[str] = []
     for origin in origins:
@@ -72,6 +82,8 @@ def create_app() -> FastAPI:
     application.add_middleware(
         CORSMiddleware,
         allow_origins=_cors_origins(),
+        # Vercel production + preview URLs vary by project alias; allow any *.vercel.app.
+        allow_origin_regex=r"https://[\w.-]+\.vercel\.app",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
