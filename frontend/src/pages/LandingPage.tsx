@@ -20,6 +20,29 @@ const NAV_LINKS = [
   { href: "#outcomes", label: "Outcomes" },
 ];
 
+/** Presentation deck (.pptx). Override with VITE_LANDING_PPT_URL. */
+const LANDING_PPT_URL =
+  import.meta.env.VITE_LANDING_PPT_URL?.toString() || "/assets/sentinelai-deck.pptx";
+
+/** Written report (.pdf). Override with VITE_LANDING_REPORT_URL. */
+const LANDING_REPORT_URL =
+  import.meta.env.VITE_LANDING_REPORT_URL?.toString() || "/assets/sentinelai-report.pdf";
+
+/** Google Drive (or other) demo video link. Override with VITE_LANDING_DEMO_URL. */
+const LANDING_DEMO_URL =
+  import.meta.env.VITE_LANDING_DEMO_URL?.toString() || "";
+
+/** Prefer Drive preview so the video player opens ready to play. */
+function toDemoPlayUrl(url: string): string {
+  if (!url) return "#";
+  const driveId =
+    url.match(/\/file\/d\/([^/]+)/)?.[1] || url.match(/[?&]id=([^&]+)/)?.[1];
+  if (driveId && /drive\.google\.com/i.test(url)) {
+    return `https://drive.google.com/file/d/${driveId}/preview`;
+  }
+  return url;
+}
+
 const STAGES = [
   {
     step: "01",
@@ -290,6 +313,25 @@ function Hero() {
     mouseY.set(((e.clientY - rect.top) / rect.height) * 100);
   };
 
+  const demoHref = toDemoPlayUrl(LANDING_DEMO_URL);
+
+  const downloadPptAndReport = () => {
+    const triggerDownload = (url: string, filename: string) => {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.rel = "noopener";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    };
+    triggerDownload(LANDING_PPT_URL, "sentinelai-deck.pptx");
+    // Browsers often block two instant downloads; stagger the second.
+    window.setTimeout(() => {
+      triggerDownload(LANDING_REPORT_URL, "sentinelai-report.pdf");
+    }, 250);
+  };
+
   return (
     <section ref={sectionRef} className={styles.hero} onMouseMove={onMove}>
       <motion.div className={styles.heroMedia} style={reduce ? undefined : { y: imageY }}>
@@ -348,20 +390,41 @@ function Hero() {
             explanations — built for enterprise security operations.
           </motion.p>
           <motion.div
-            className={styles.heroCtas}
+            className={styles.heroActions}
             initial={reduce ? false : { opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
           >
-            <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
-              <Link to="/app" className={styles.btnPrimary}>
-                Enter Platform
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
-              <a href="#pipeline" className={styles.btnGhost}>
-                See the Pipeline
-              </a>
+            <div className={styles.heroCtas}>
+              <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
+                <Link to="/app" className={styles.btnPrimary}>
+                  Enter Platform
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
+                <a
+                  href={demoHref}
+                  className={styles.btnGhost}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  {...(!LANDING_DEMO_URL ? { "aria-disabled": true } : {})}
+                >
+                  Watch Demo
+                </a>
+              </motion.div>
+            </div>
+            <motion.div
+              className={styles.heroDownloadWrap}
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <button
+                type="button"
+                className={`${styles.btnGhost} ${styles.heroDownloadBtn}`}
+                onClick={downloadPptAndReport}
+              >
+                Download PPT + Report
+              </button>
             </motion.div>
           </motion.div>
         </div>

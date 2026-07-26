@@ -54,21 +54,49 @@ export function Hero() {
           </p>
 
           <div
-            className="mt-9 flex animate-fade-up flex-col gap-3 sm:flex-row sm:items-center"
+            className="mt-9 flex w-max max-w-full animate-fade-up flex-col items-stretch gap-3"
             style={{ animationDelay: "0.5s" }}
           >
-            <a
-              href="#contact"
-              className="inline-flex h-12 items-center justify-center bg-hw-red px-7 text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-white transition-colors hover:bg-hw-red-deep"
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <a
+                href="#contact"
+                className="inline-flex h-12 items-center justify-center bg-hw-red px-7 text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-white transition-colors hover:bg-hw-red-deep"
+              >
+                Request a Demo
+              </a>
+              <a
+                href={process.env.NEXT_PUBLIC_LANDING_DEMO_URL || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-12 items-center justify-center border border-white/35 bg-white/5 px-7 text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-colors hover:border-white hover:bg-white/10"
+              >
+                Watch Demo
+              </a>
+            </div>
+            <button
+              type="button"
+              className="inline-flex h-12 w-full items-center justify-center border border-white/35 bg-white/5 px-7 text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-colors hover:border-white hover:bg-white/10"
+              onClick={() => {
+                const ppt =
+                  process.env.NEXT_PUBLIC_LANDING_PPT_URL ||
+                  "/assets/sentinelai-deck.pptx";
+                const report =
+                  process.env.NEXT_PUBLIC_LANDING_REPORT_URL ||
+                  "/assets/sentinelai-report.pdf";
+                const trigger = (url: string, filename: string) => {
+                  const link = document.createElement("a");
+                  link.href = url;
+                  link.download = filename;
+                  document.body.appendChild(link);
+                  link.click();
+                  link.remove();
+                };
+                trigger(ppt, "sentinelai-deck.pptx");
+                window.setTimeout(() => trigger(report, "sentinelai-report.pdf"), 250);
+              }}
             >
-              Request a Demo
-            </a>
-            <a
-              href="#pipeline"
-              className="inline-flex h-12 items-center justify-center border border-white/35 bg-white/5 px-7 text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-white backdrop-blur-sm transition-colors hover:border-white hover:bg-white/10"
-            >
-              See the Pipeline
-            </a>
+              Download PPT + Report
+            </button>
           </div>
         </div>
       </div>
