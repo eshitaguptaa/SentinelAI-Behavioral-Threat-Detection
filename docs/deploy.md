@@ -30,11 +30,14 @@ git push
    (not Railpack). If a deploy fails with “No start command”, confirm  
    **Settings → Build → Builder** is **Dockerfile**, then redeploy.  
 
-Fallback start command (Settings → Deploy → Custom Start Command), if needed:
+Fallback start command (Settings → Deploy → Custom Start Command), if needed.
+**Must** use `sh -c` so `$PORT` expands (otherwise uvicorn gets the literal `$PORT`):
 
 ```bash
-uvicorn synthetic_data.api.app:app --host 0.0.0.0 --port $PORT
+sh -c "exec uvicorn synthetic_data.api.app:app --host 0.0.0.0 --port $PORT"
 ```
+
+Or clear the Custom Start Command and let the Dockerfile `CMD` handle it.
 
 ### A3. Variables (service → Variables)
 

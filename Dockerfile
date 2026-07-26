@@ -21,6 +21,7 @@ RUN pip install --upgrade pip \
 COPY synthetic_data ./synthetic_data
 COPY models ./models
 
-# Render/Railway inject $PORT
+# Render/Railway inject $PORT — must run via shell so $PORT expands.
 EXPOSE 8000
-CMD ["sh", "-c", "uvicorn synthetic_data.api.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "exec uvicorn synthetic_data.api.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+
