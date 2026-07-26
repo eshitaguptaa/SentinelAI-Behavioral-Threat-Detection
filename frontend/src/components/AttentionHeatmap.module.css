@@ -412,3 +412,19 @@
     width: min(100%, 20rem);
   }
 }
+
+@media (max-width: 640px) {
+  .workspace {
+    gap: 0.75rem;
+  }
+
+  .matrixBlock {
+    padding: 0.7rem;
+    overflow-x: auto;
+  }
+
+  .matrix {
+    width: 100%;
+    min-width: 16rem;
+  }
+}

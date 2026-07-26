@@ -1,7 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useId, useState } from "react";
+import { Menu, X } from "lucide-react";
 import { Outlet, useLocation } from "react-router-dom";
 
 import Sidebar from "../components/Sidebar";
+import { BrandName, Logo } from "../components/Logo";
 import { AnalysisProvider, useAnalysis } from "../contexts/AnalysisContext";
 import styles from "../pages/Dashboard.module.css";
 
@@ -19,16 +21,59 @@ function SocShell() {
   const { error, errorTitle, loading, hydrating, clearError } = useAnalysis();
   const location = useLocation();
   const contextLabel = TITLES[location.pathname] ?? "Workspace";
+  const [navOpen, setNavOpen] = useState(false);
+  const drawerId = useId();
 
   useEffect(() => {
     document.title = `SentinelAI · ${contextLabel}`;
     document.body.style.background = "";
   }, [contextLabel]);
 
+  useEffect(() => {
+    setNavOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!navOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setNavOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [navOpen]);
+
   return (
     <div className={styles.shell}>
-      <Sidebar />
+      <Sidebar variant="rail" />
+
       <div className={styles.mainColumn}>
+        <header className={styles.mobileTopbar}>
+          <button
+            type="button"
+            className={styles.menuBtn}
+            aria-label={navOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={navOpen}
+            aria-controls={drawerId}
+            onClick={() => setNavOpen((open) => !open)}
+          >
+            {navOpen ? <X size={18} aria-hidden /> : <Menu size={18} aria-hidden />}
+          </button>
+          <div className={styles.mobileBrand}>
+            <Logo withWordmark={false} size={26} />
+            <div className={styles.mobileBrandText}>
+              <span className={styles.mobileBrandName}>
+                <BrandName />
+              </span>
+              <span className={styles.mobileContext}>{contextLabel}</span>
+            </div>
+          </div>
+        </header>
+
         <main className={styles.main} data-scroll-root>
           {error ? (
             <div className={styles.error} role="alert">
@@ -78,6 +123,20 @@ function SocShell() {
           </div>
         ) : null}
       </div>
+
+      <button
+        type="button"
+        className={`${styles.navScrim} ${navOpen ? styles.navScrimOpen : ""}`}
+        aria-label="Close navigation"
+        tabIndex={navOpen ? 0 : -1}
+        onClick={() => setNavOpen(false)}
+      />
+      <Sidebar
+        id={drawerId}
+        variant="drawer"
+        open={navOpen}
+        onNavigate={() => setNavOpen(false)}
+      />
     </div>
   );
 }

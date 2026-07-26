@@ -14,7 +14,19 @@ import { useAnalysis } from "../contexts/AnalysisContext";
 import { BrandName, Logo } from "./Logo";
 import styles from "./Sidebar.module.css";
 
-export default function Sidebar() {
+type SidebarProps = {
+  variant?: "rail" | "drawer";
+  open?: boolean;
+  onNavigate?: () => void;
+  id?: string;
+};
+
+export default function Sidebar({
+  variant = "rail",
+  open = false,
+  onNavigate,
+  id,
+}: SidebarProps) {
   const { rows, history, hydrating } = useAnalysis();
   const unlocked = !hydrating && (rows.length > 0 || history.length > 0);
 
@@ -33,9 +45,22 @@ export default function Sidebar() {
         { to: "/app/system", end: false, label: "System", icon: Server },
       ];
 
+  const rootClass = [
+    styles.sidebar,
+    variant === "rail" ? styles.rail : styles.drawerPanel,
+    variant === "drawer" && open ? styles.drawerPanelOpen : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <aside className={styles.sidebar} aria-label="SOC navigation">
-      <Link to="/app" className={styles.brand} aria-label="SentinelAI workspace home">
+    <aside id={id} className={rootClass} aria-label="SOC navigation">
+      <Link
+        to="/app"
+        className={styles.brand}
+        aria-label="SentinelAI workspace home"
+        onClick={onNavigate}
+      >
         <Logo withWordmark={false} size={32} />
         <span className={styles.brandText}>
           <span className={styles.brandName}>
@@ -55,6 +80,7 @@ export default function Sidebar() {
                 key={item.to}
                 to={item.to}
                 end={item.end}
+                onClick={onNavigate}
                 className={({ isActive }) =>
                   `${styles.link} ${isActive ? styles.active : ""}`
                 }
@@ -68,7 +94,12 @@ export default function Sidebar() {
       </div>
 
       <div className={styles.footer}>
-        <Link to="/" className={styles.landingLink} aria-label="Back to landing page">
+        <Link
+          to="/"
+          className={styles.landingLink}
+          aria-label="Back to landing page"
+          onClick={onNavigate}
+        >
           <ArrowLeft className={styles.landingIcon} aria-hidden />
         </Link>
       </div>

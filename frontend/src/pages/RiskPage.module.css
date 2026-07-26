@@ -749,6 +749,10 @@
   .metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .exposureValue {
+    font-size: clamp(2.75rem, 12vw, 4.5rem);
+  }
 }
 
 @media (max-width: 640px) {
@@ -765,10 +769,10 @@
   }
 
   .spectrumSegLabel {
-    font-size: 0.58rem;
+    display: none;
   }
 
   .exposureValue {
-    font-size: 3.6rem;
+    font-size: clamp(2.5rem, 14vw, 3.6rem);
   }
 }

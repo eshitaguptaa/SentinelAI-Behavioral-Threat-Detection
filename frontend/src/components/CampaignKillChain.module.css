@@ -12,7 +12,7 @@
 
 .head {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.9fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.9fr);
   gap: 1rem 1.25rem;
   align-items: start;
   margin-bottom: 0.95rem;
@@ -505,6 +505,12 @@
   .headStats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
+  .progress {
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 @media (max-width: 640px) {
@@ -512,13 +518,12 @@
     grid-template-columns: 1fr;
   }
 
-  .progress {
-    justify-content: flex-start;
-    overflow-x: auto;
-  }
-
   .hint {
     display: none;
+  }
+
+  .stageCard {
+    min-width: 0;
   }
 }
 

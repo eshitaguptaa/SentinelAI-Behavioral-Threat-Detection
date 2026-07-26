@@ -49,16 +49,17 @@ function EmployeeTable({
             No employees match. Clear filters or adjust search.
           </p>
         ) : (
+          <>
           <table className={styles.table}>
             <thead>
               <tr>
                 <th className={styles.colRank}>#</th>
                 <th>Employee</th>
                 <th>Risk</th>
-                <th>Anomaly</th>
+                <th className={styles.colDesktop}>Anomaly</th>
                 <th>Level</th>
                 <th>Attack</th>
-                <th>Status</th>
+                <th className={styles.colDesktop}>Status</th>
                 <th className={styles.colAction}>
                   <span className={styles.visuallyHidden}>Open</span>
                 </th>
@@ -126,7 +127,7 @@ function EmployeeTable({
                         </span>
                       </div>
                     </td>
-                    <td>
+                    <td className={styles.colDesktop}>
                       <div className={styles.scoreCell}>
                         <strong className={styles.mono}>
                           {formatScore(row.anomaly_score)}
@@ -171,7 +172,7 @@ function EmployeeTable({
                         </span>
                       </div>
                     </td>
-                    <td>
+                    <td className={styles.colDesktop}>
                       <span
                         className={styles.badge}
                         style={{
@@ -193,6 +194,73 @@ function EmployeeTable({
               })}
             </tbody>
           </table>
+
+          <ul className={styles.cardList}>
+            {rows.map((row, index) => {
+              const selected = row.id === selectedId;
+              const levelColor =
+                RISK_COLORS[row.risk_level] || "var(--text-muted)";
+              const attackColor =
+                ATTACK_COLORS[row.attack_type] || "#8a98a8";
+              return (
+                <li key={`card-${row.id}`}>
+                  <button
+                    type="button"
+                    className={`${styles.card} ${selected ? styles.cardSelected : ""}`}
+                    onClick={() => onSelect(row)}
+                    aria-pressed={selected}
+                  >
+                    <div className={styles.cardTop}>
+                      <span
+                        className={`${styles.rank} ${index < 3 ? styles.rankHot : ""}`}
+                      >
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <div className={styles.employeeCell}>
+                        <strong className={styles.mono}>{row.employee_id}</strong>
+                        <span>{row.simulation_day}</span>
+                      </div>
+                      <span
+                        className={styles.badge}
+                        style={{
+                          color: levelColor,
+                          borderColor: `${levelColor}55`,
+                          background: `${levelColor}14`,
+                        }}
+                      >
+                        {row.risk_level}
+                      </span>
+                    </div>
+                    <div className={styles.cardMeta}>
+                      <span>
+                        Risk <strong className={styles.mono}>{formatScore(row.risk_score)}</strong>
+                      </span>
+                      <span>
+                        Anomaly{" "}
+                        <strong className={styles.mono}>
+                          {formatScore(row.anomaly_score)}
+                        </strong>
+                      </span>
+                    </div>
+                    <div className={styles.cardFoot}>
+                      <span
+                        className={styles.badge}
+                        style={{
+                          color: attackColor,
+                          borderColor: `${attackColor}55`,
+                          background: `${attackColor}14`,
+                        }}
+                      >
+                        {row.attack_type}
+                      </span>
+                      <span className={styles.cardStatus}>{row.status}</span>
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          </>
         )}
       </div>
     </section>

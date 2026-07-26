@@ -1037,6 +1037,20 @@
     padding: 0 1rem 1rem;
   }
 
+  .stageNav,
+  .vaultMeters {
+    grid-template-columns: 1fr;
+  }
+
+  .ringCardDark {
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .ringCardDark:last-child {
+    border-bottom: 0;
+  }
+
   .factStrip,
   .briefPair,
   .verdictRow,
@@ -1067,26 +1081,17 @@
 }
 
 @media (max-width: 720px) {
-  .stageNav,
-  .vaultMeters {
-    grid-template-columns: 1fr;
-  }
-
-  .ringCardDark {
-    border-right: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .ringCardDark:last-child {
-    border-bottom: 0;
-  }
-
   .eventList li {
     grid-template-columns: 1.7rem minmax(0, 1fr);
   }
 
   .eventError {
     grid-column: 2;
+  }
+
+  .gaugeWrap {
+    width: min(160px, 42vw);
+    height: min(160px, 42vw);
   }
 }
 

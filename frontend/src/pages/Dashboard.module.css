@@ -1,5 +1,5 @@
 .shell {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
   background: var(--bg);
@@ -10,9 +10,78 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  min-height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
   overflow: hidden;
+}
+
+.mobileTopbar {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 35;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.4rem;
+  padding: 0.65rem 0.9rem;
+  background: rgba(255, 255, 255, 0.94);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+}
+
+.menuBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.menuBtn:hover {
+  border-color: color-mix(in srgb, var(--hw-red) 35%, white);
+  color: var(--hw-red);
+}
+
+.mobileBrand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.mobileBrandText {
+  display: grid;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.mobileBrandName {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.mobileContext {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navScrim {
+  display: none;
 }
 
 .topbar {
@@ -315,7 +384,16 @@
 
 @media (max-width: 960px) {
   .introStage {
+    display: flex;
+    flex-direction: column;
     grid-template-columns: 1fr;
+    flex: 1 1 auto;
+    overflow: visible;
+  }
+
+  .introUpload {
+    order: -1;
+    flex: 0 0 auto;
   }
 
   .introHeadline {
@@ -324,6 +402,48 @@
 
   .introUpload .uploadZone {
     min-height: 12rem;
+    flex: none;
+  }
+}
+
+/* Phone: compact copy so upload stays above the fold */
+@media (max-width: 767px) {
+  .pageFill {
+    overflow: visible;
+    min-height: auto;
+  }
+
+  .introUpload {
+    padding: 0.75rem;
+  }
+
+  .introUpload .uploadZone {
+    min-height: 11.5rem;
+    padding: 1.15rem 1rem;
+    gap: 1rem;
+  }
+
+  .introCopy {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+    gap: 0.55rem;
+    padding: 1rem 1.05rem 1.15rem;
+  }
+
+  .introHeadline {
+    max-width: none;
+    font-size: 1.45rem;
+    line-height: 1.1;
+  }
+
+  .introLead,
+  .introPrompts {
+    display: none;
+  }
+
+  .introRule {
+    width: 2.5rem;
+    margin-bottom: 0.1rem;
   }
 }
 
@@ -1478,6 +1598,36 @@
 @media (max-width: 1100px) {
   .shell {
     grid-template-columns: 1fr;
+    min-height: 100dvh;
+  }
+
+  .mainColumn {
+    height: 100dvh;
+    min-height: 0;
+  }
+
+  .mobileTopbar {
+    display: flex;
+  }
+
+  .navScrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background: rgba(17, 17, 17, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    cursor: pointer;
+  }
+
+  .navScrimOpen {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .cards,
@@ -1504,11 +1654,26 @@
     align-items: flex-start;
     flex-direction: column;
   }
+
+  .error {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 960px) {
+  .workflow {
+    grid-template-columns: 1fr;
+  }
+
+  .workflowStep {
+    padding: 1.1rem 1.15rem;
+  }
 }
 
 @media (max-width: 640px) {
   .cards,
-  .systemGrid {
+  .systemGrid,
+  .riskBreakdownGrid {
     grid-template-columns: 1fr;
   }
 
@@ -1517,10 +1682,64 @@
   }
 
   .main {
-    padding: 1.1rem;
+    padding: 0.95rem 0.85rem 1.25rem;
   }
 
   .topbar {
     padding-inline: 1rem;
+  }
+
+  .mobileTopbar {
+    padding-inline: 0.75rem;
+  }
+
+  .uploadActions {
+    flex-direction: column;
+    align-items: stretch;
+    max-width: none;
+  }
+
+  .uploadPrimary,
+  .uploadGhost {
+    width: 100%;
+    justify-content: center;
+    white-space: normal;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .actions .primaryBtn {
+    grid-column: 1 / -1;
+  }
+
+  .error {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .loadingPanel {
+    padding: 1.6rem 1.15rem 1.4rem;
+  }
+
+  .loadingStages {
+    flex-wrap: wrap;
+  }
+
+  .historyActions {
+    width: 100%;
+  }
+
+  .historyActions button {
+    flex: 1;
   }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
+  AnimatePresence,
   motion,
   useMotionTemplate,
   useMotionValue,
@@ -144,6 +145,7 @@ function ScrollProgress() {
 function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -151,6 +153,23 @@ function SiteHeader() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const goToSection = (href: string) => {
+    setOpen(false);
+    const id = href.startsWith("#") ? href.slice(1) : href;
+    const target = document.getElementById(id);
+    if (!target) return;
+    // Let the drawer finish closing, then ease to the section.
+    window.setTimeout(
+      () => {
+        target.scrollIntoView({
+          behavior: reduce ? "auto" : "smooth",
+          block: "start",
+        });
+      },
+      reduce ? 0 : 180,
+    );
+  };
 
   return (
     <header className={`${styles.header} ${scrolled ? styles.headerScrolled : ""}`}>
@@ -197,18 +216,53 @@ function SiteHeader() {
         </div>
       </div>
 
-      {open && (
-        <div className={styles.mobileNav}>
-          {NAV_LINKS.map((link) => (
-            <a key={link.href} href={link.href} onClick={() => setOpen(false)}>
-              {link.label}
-            </a>
-          ))}
-          <Link to="/app" onClick={() => setOpen(false)}>
-            Enter Platform
-          </Link>
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {open ? (
+          <motion.div
+            key="mobile-nav"
+            className={styles.mobileNav}
+            initial={reduce ? false : { height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={reduce ? undefined : { height: 0, opacity: 0 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div className={styles.mobileNavInner}>
+              {NAV_LINKS.map((link, index) => (
+                <motion.a
+                  key={link.href}
+                  href={link.href}
+                  className={styles.mobileNavLink}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    goToSection(link.href);
+                  }}
+                  initial={reduce ? false : { opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    delay: reduce ? 0 : 0.06 + index * 0.04,
+                    duration: 0.22,
+                  }}
+                >
+                  {link.label}
+                </motion.a>
+              ))}
+              <motion.div
+                initial={reduce ? false : { opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: reduce ? 0 : 0.18, duration: 0.22 }}
+              >
+                <Link
+                  to="/app"
+                  className={styles.mobileCta}
+                  onClick={() => setOpen(false)}
+                >
+                  Enter Platform
+                </Link>
+              </motion.div>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </header>
   );
 }
@@ -322,15 +376,21 @@ function Hero() {
 }
 
 function PulseStrip() {
-  const items = [...PULSE_ITEMS, ...PULSE_ITEMS];
+  // Enough copies per group to cover ultrawide viewports; two identical
+  // groups animate by exactly -50% for a seamless loop (no flex-gap seam).
+  const loopItems = [...PULSE_ITEMS, ...PULSE_ITEMS, ...PULSE_ITEMS];
   return (
     <div className={styles.pulseStrip} aria-hidden>
       <div className={styles.pulseTrack}>
-        {items.map((item, i) => (
-          <span key={`${item}-${i}`} className={styles.pulseItem}>
-            <span className={styles.pulseDot} />
-            {item}
-          </span>
+        {[0, 1].map((group) => (
+          <div key={group} className={styles.pulseGroup}>
+            {loopItems.map((item, i) => (
+              <span key={`${group}-${item}-${i}`} className={styles.pulseItem}>
+                <span className={styles.pulseDot} />
+                {item}
+              </span>
+            ))}
+          </div>
         ))}
       </div>
     </div>

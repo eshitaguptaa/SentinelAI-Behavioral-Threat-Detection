@@ -523,20 +523,6 @@
   .heroStats {
     border-left: 0;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .heroStat {
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .heroStat:last-child {
-    border-right: 0;
-  }
-}
-
-@media (max-width: 640px) {
-  .heroStats {
     grid-template-columns: 1fr;
   }
 
@@ -548,8 +534,15 @@
   .heroStat:last-child {
     border-bottom: 0;
   }
+}
 
+@media (max-width: 640px) {
   .searchWrap {
     max-width: none;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

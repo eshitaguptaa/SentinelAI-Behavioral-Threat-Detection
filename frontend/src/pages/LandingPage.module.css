@@ -297,18 +297,42 @@
 }
 
 .mobileNav {
+  overflow: hidden;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   background: #fff;
-  padding: 1rem 1.25rem;
 }
 
-.mobileNav a {
+.mobileNavInner {
+  padding: 0.85rem 1.25rem 1.15rem;
+}
+
+.mobileNavLink {
   display: block;
-  padding: 0.5rem 0;
+  padding: 0.55rem 0;
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--hw-ink);
   text-decoration: none;
+}
+
+.mobileCta {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.85rem;
+  padding: 0.85rem 1rem !important;
+  background: var(--hw-red);
+  color: #fff !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.mobileCta:hover {
+  background: var(--hw-red-deep);
 }
 
 @media (min-width: 640px) {
@@ -324,6 +348,29 @@
 
   .menuBtn {
     display: none;
+  }
+}
+
+/* Mobile header: keep brand + menu only — CTAs live in the drawer */
+@media (max-width: 767px) {
+  .headerInner {
+    gap: 0.75rem;
+  }
+
+  .brand {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .headerActions {
+    flex-shrink: 0;
+    gap: 0.35rem;
+  }
+
+  .headerActions .btnPrimary,
+  .headerActions .btnCompact,
+  .headerTextLink {
+    display: none !important;
   }
 }
 
@@ -503,7 +550,7 @@
   animation: scrollCue 1.8s ease-in-out infinite;
 }
 
-/* Live pulse strip */
+/* Live pulse strip — seamless infinite marquee */
 .pulseStrip {
   overflow: hidden;
   border-block: 1px solid rgba(0, 0, 0, 0.08);
@@ -514,13 +561,23 @@
 .pulseTrack {
   display: flex;
   width: max-content;
+  animation: marquee 36s linear infinite;
+  will-change: transform;
+}
+
+.pulseGroup {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
   gap: 2.5rem;
-  padding: 0.85rem 0;
-  animation: marquee 32s linear infinite;
+  /* Trailing space equals gap so group A|B seam matches item spacing */
+  padding-inline-end: 2.5rem;
+  padding-block: 0.85rem;
 }
 
 .pulseItem {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 0.55rem;
   font-family: var(--font-mono);
@@ -606,7 +663,7 @@
   background: rgba(0, 0, 0, 0.1);
 }
 
-@media (min-width: 640px) {
+@media (min-width: 900px) {
   .pillars {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -754,6 +811,14 @@
   background: rgba(228, 0, 43, 0.08);
   pointer-events: none;
   animation: bloom 7s ease-in-out infinite alternate;
+}
+
+@media (max-width: 640px) {
+  .radar,
+  .radarSweep,
+  .pipelineBloom {
+    display: none;
+  }
 }
 
 .pipelineTitle {
