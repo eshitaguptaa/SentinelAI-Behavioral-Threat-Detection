@@ -6,6 +6,7 @@ at startup. Never trains or retrains models.
 
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
@@ -18,6 +19,26 @@ from synthetic_data.api.routes import router
 
 APP_TITLE = "SentinelAI"
 APP_VERSION = "2.0"
+
+_DEFAULT_ORIGINS = (
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+)
+
+
+def _cors_origins() -> list[str]:
+    """Local defaults plus optional comma-separated ``CORS_ALLOW_ORIGINS``."""
+    origins = list(_DEFAULT_ORIGINS)
+    extra = (os.environ.get("CORS_ALLOW_ORIGINS") or "").strip()
+    if extra:
+        origins.extend(item.strip() for item in extra.split(",") if item.strip())
+    seen: set[str] = set()
+    unique: list[str] = []
+    for origin in origins:
+        if origin not in seen:
+            seen.add(origin)
+            unique.append(origin)
+    return unique
 
 
 @asynccontextmanager
@@ -50,10 +71,7 @@ def create_app() -> FastAPI:
 
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-        ],
+        allow_origins=_cors_origins(),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

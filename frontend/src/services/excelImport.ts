@@ -295,7 +295,7 @@ export function downloadFeatureVectorTemplate(): void {
   ];
 
   downloadFeatureVectorsWorkbook(
-    sample as FeatureVectorPayload[],
+    sample as unknown as FeatureVectorPayload[],
     "sentinelai_feature_vectors_template.xlsx",
   );
 }

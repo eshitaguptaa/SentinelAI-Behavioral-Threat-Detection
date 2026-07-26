@@ -197,6 +197,8 @@ Optional:
 
 Also set `VITE_API_BASE_URL` in `frontend/.env` if you prefer app-local config.
 
+**Production deploy (Vercel UI + Railway/Fly API):** see [`docs/deploy.md`](docs/deploy.md).
+
 ### 3. Model artifact
 
 **Behavioural Transformer** (required):

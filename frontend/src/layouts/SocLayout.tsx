@@ -18,7 +18,7 @@ const TITLES: Record<string, string> = {
 };
 
 function SocShell() {
-  const { error, errorTitle, loading, hydrating, clearError } = useAnalysis();
+  const { error, errorTitle, loading, clearError } = useAnalysis();
   const location = useLocation();
   const contextLabel = TITLES[location.pathname] ?? "Workspace";
   const [navOpen, setNavOpen] = useState(false);
@@ -90,7 +90,7 @@ function SocShell() {
           <Outlet />
         </main>
 
-        {loading || hydrating ? (
+        {loading ? (
           <div
             className={styles.loadingOverlay}
             role="status"
@@ -104,21 +104,15 @@ function SocShell() {
                 <span className={styles.loadingCore} />
               </div>
               <p className={styles.loadingEyebrow}>SentinelAI</p>
-              <h2 className={styles.loadingTitle}>
-                {hydrating ? "Restoring your workspace" : "Scoring behavioural risk"}
-              </h2>
+              <h2 className={styles.loadingTitle}>Scoring behavioural risk</h2>
               <p className={styles.loadingCopy}>
-                {hydrating
-                  ? "Bringing back the last analysis session…"
-                  : "Running detection, risk fusion, and case prep. This may take a moment."}
+                Running detection, risk fusion, and case prep. This may take a moment.
               </p>
-              {!hydrating ? (
-                <ul className={styles.loadingStages} aria-hidden>
-                  <li>Detect</li>
-                  <li>Fuse risk</li>
-                  <li>Explain</li>
-                </ul>
-              ) : null}
+              <ul className={styles.loadingStages} aria-hidden>
+                <li>Detect</li>
+                <li>Fuse risk</li>
+                <li>Explain</li>
+              </ul>
             </div>
           </div>
         ) : null}
