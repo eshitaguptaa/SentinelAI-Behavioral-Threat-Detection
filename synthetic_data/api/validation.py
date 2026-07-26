@@ -33,7 +33,7 @@ def build_feature_vector(
 
     Unknown keys are ignored. Missing optional columns use dataclass defaults.
     Attack ground-truth columns may be present in the payload but are never
-    used by Isolation Forest (``ml_features()`` excludes them).
+    used by the behavioural detector (``ml_features()`` excludes them).
     """
     vector, _sequence = build_feature_vector_with_sequence(payload)
     return vector
@@ -139,7 +139,7 @@ def require_fitted_model(model: Any) -> Any:
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=(
                 "Anomaly detection model is not loaded. Set SENTINELAI_MODEL_PATH "
-                "to a fitted Transformer (.pt) or Isolation Forest (.joblib) artifact."
+                "to a fitted Behavioural Transformer (.pt) artifact."
             ),
         )
     return model

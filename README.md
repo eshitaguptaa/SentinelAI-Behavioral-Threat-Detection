@@ -22,7 +22,7 @@ It answers a practical SOC question:
 
 > Given one employee’s activity on one simulation day, how anomalous is the behaviour, how severe is the enterprise risk, and why?
 
-**Detection is unsupervised** (Behavioural Transformer by default, Isolation Forest as legacy). **Risk, attack labels, and recommendations are deterministic** — no attack ground-truth leakage into live scoring.
+**Detection is unsupervised** (Behavioural Transformer). **Risk, attack labels, and recommendations are deterministic** — no attack ground-truth leakage into live scoring.
 
 ---
 
@@ -30,7 +30,7 @@ It answers a practical SOC question:
 
 | Area | Capability |
 |------|------------|
-| Detection | Behavioural Transformer (reconstruction + attention) or Isolation Forest |
+| Detection | Behavioural Transformer (reconstruction + attention) |
 | Risk | Deterministic LOW / MEDIUM / HIGH / CRITICAL scoring |
 | Classification | Rule-based attack types + MITRE ATT&CK mapping |
 | Explainability | Plain-language summary, factors, observations, recommended response |
@@ -51,11 +51,8 @@ It answers a practical SOC question:
 ```mermaid
 flowchart LR
   A[Events / Excel / CSV] --> B[Feature engineering]
-  B --> C{Detector}
-  C -->|default| D[Behavioural Transformer]
-  C -->|legacy| E[Isolation Forest]
-  D --> F[AnomalyPrediction]
-  E --> F
+  B --> C[Behavioural Transformer]
+  C --> F[AnomalyPrediction]
   F --> CS[Cold-start + drift]
   CS --> G[Risk engine]
   G --> H[Attack + MITRE]
@@ -107,7 +104,7 @@ SentinelAI-Behavioral-Threat-Detection/
 ├── train_transformer_model.py     # Train Behavioural Transformer
 ├── calibrate_anomaly.py           # Calibrate score mapping
 ├── evaluate_detection.py          # Offline P/R/F1 + FPR@top-k% vs GT
-├── integration.py                 # IF demo + --prepare-model
+├── integration.py                 # End-to-end Transformer demo (no UI)
 ├── synthetic_data/                # Active Python pipeline + API
 │   ├── generators/                # Enterprise / profiles / timelines
 │   ├── attacks/                   # Attack injection (incl. spoofing / low-and-slow / drift)
@@ -116,7 +113,7 @@ SentinelAI-Behavioral-Threat-Detection/
 │   ├── streaming/                 # Near-real-time scoring adapter
 │   ├── feature_engineering/       # FeatureVector construction
 │   ├── behavioural_transformer/   # Model, train, dataset
-│   ├── anomaly_detection/         # Isolation Forest (legacy)
+│   ├── anomaly_detection/         # Shared AnomalyPrediction schema
 │   ├── risk_engine/
 │   ├── attack_classification/
 │   ├── mitre/
@@ -124,7 +121,7 @@ SentinelAI-Behavioral-Threat-Detection/
 │   └── api/                       # FastAPI app (synthetic_data.api.app)
 ├── frontend/                      # Vite + React SOC workspace
 ├── landing/                       # Next.js marketing site (optional)
-├── models/                        # .pt / .joblib / .meta.json artifacts
+├── models/                        # .pt / .meta.json artifacts
 ├── datasets/                      # employees, profiles, events CSVs
 ├── docs/                          # Diagrams + screenshots
 ├── tests/                         # pytest
@@ -138,7 +135,7 @@ SentinelAI-Behavioral-Threat-Detection/
 | Layer | Stack |
 |-------|--------|
 | Data & features | Python, pandas, numpy, Faker |
-| Detection | PyTorch (Transformer), scikit-learn / joblib (Isolation Forest) |
+| Detection | PyTorch (Behavioural Transformer) |
 | API | FastAPI, Pydantic, Uvicorn |
 | SOC UI | React 19, TypeScript, Vite, Axios, Recharts, Framer Motion |
 | Marketing | Next.js 14, Tailwind CSS |
@@ -195,16 +192,14 @@ VITE_API_BASE_URL=http://127.0.0.1:8000
 Optional:
 
 ```env
-# Force detector when the path is ambiguous
-# SENTINELAI_DETECTOR=transformer
-# SENTINELAI_DETECTOR=iforest
+# (none required beyond the values above)
 ```
 
 Also set `VITE_API_BASE_URL` in `frontend/.env` if you prefer app-local config.
 
 ### 3. Model artifact
 
-**Preferred — Behavioural Transformer** (repo default):
+**Behavioural Transformer** (required):
 
 ```bash
 # From synthetic timelines
@@ -220,15 +215,7 @@ Writes `models/sentinelai_transformer.pt` (+ metadata). Optionally calibrate:
 python calibrate_anomaly.py
 ```
 
-**Legacy — Isolation Forest:**
-
-```bash
-python integration.py --prepare-model
-```
-
-Writes `models/sentinelai_iforest.joblib`. Point `SENTINELAI_MODEL_PATH` at that file.
-
-> The API **never retrains**. It only loads the configured artifact.
+> The API **never retrains**. It only loads the configured Transformer artifact.
 
 ### 4. Start the backend
 
@@ -356,7 +343,6 @@ The Investigate page is the analyst dossier:
 | Calibrate anomaly mapping | `python calibrate_anomaly.py` |
 | Offline eval vs GT labels | `python evaluate_detection.py` |
 | Inject labeled attacks into events CSV | `python regenerate_attack_dataset.py` |
-| Fit Isolation Forest | `python integration.py --prepare-model` |
 | End-to-end Python demo (no UI) | `python integration.py` |
 
 Default Transformer train knobs include epoch count, employee/day sampling, and max sequence length (see script `--help`).
@@ -381,8 +367,7 @@ Tests use mocks and deterministic fixtures. They do **not** retrain production m
 
 | Variable | Where | Purpose |
 |----------|--------|---------|
-| `SENTINELAI_MODEL_PATH` | root `.env` | Path to `.pt` or `.joblib` detector |
-| `SENTINELAI_DETECTOR` | root `.env` | Optional force: `transformer` \| `iforest` |
+| `SENTINELAI_MODEL_PATH` | root `.env` | Path to Behavioural Transformer `.pt` artifact |
 | `API_HOST` / `API_PORT` | root `.env` | Uvicorn bind (via `run_backend.py`) |
 | `VITE_API_BASE_URL` | root or `frontend/.env` | SOC UI → API base URL |
 
@@ -461,7 +446,7 @@ Diagrams also in-repo:
 | `/predict` returns 503 | `SENTINELAI_MODEL_PATH` missing or file not found; train or prepare a model |
 | Frontend cannot reach API | `VITE_API_BASE_URL`, CORS (Vite on `5173`), backend running |
 | Empty Investigate page | Load a batch and select a prediction row first |
-| Attention unavailable | Transformer path required; Isolation Forest will not emit attention weights |
+| Attention unavailable | Ensure the Behavioural Transformer artifact loaded successfully |
 
 ---
 

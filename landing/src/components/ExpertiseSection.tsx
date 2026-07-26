@@ -26,7 +26,7 @@ export function ExpertiseSection() {
           {[
             {
               label: "Unsupervised",
-              detail: "Isolation Forest detects deviation without attack label leakage.",
+              detail: "The Behavioural Transformer detects deviation without attack label leakage.",
             },
             {
               label: "Deterministic risk",

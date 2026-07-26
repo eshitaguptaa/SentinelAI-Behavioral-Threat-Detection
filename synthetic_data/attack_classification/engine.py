@@ -1,7 +1,7 @@
 """Attack Classification Engine — rule-based labels after anomaly detection.
 
 Uses ``FeatureVector.ml_features()`` plus the detector anomaly score when no
-signature rule matches. Does not call Isolation Forest / Transformer training
+signature rule matches. Does not call Transformer training
 and never reads simulator attack ground truth.
 """
 

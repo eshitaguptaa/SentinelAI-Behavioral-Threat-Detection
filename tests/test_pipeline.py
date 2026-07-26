@@ -1,6 +1,6 @@
 """End-to-end pipeline tests (FeatureVector → Risk → Explain).
 
-Isolation Forest is mocked — tests never retrain models.
+The anomaly detector is mocked — tests never retrain models.
 """
 
 from __future__ import annotations

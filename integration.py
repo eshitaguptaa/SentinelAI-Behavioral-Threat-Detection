@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""End-to-end SentinelAI integration demo.
+"""End-to-end SentinelAI integration demo (Behavioural Transformer).
 
 Pipeline demonstrated::
 
-    Load model
+    Load Transformer
         ↓
-    Create FeatureVector
+    Create FeatureVector (+ event sequence)
         ↓
-    Predict (Isolation Forest)
+    Predict (reconstruction anomaly)
         ↓
     Risk Assessment
         ↓
@@ -18,7 +18,6 @@ Pipeline demonstrated::
 Usage::
 
     python integration.py
-    python integration.py --prepare-model
 """
 
 from __future__ import annotations
@@ -32,13 +31,14 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-from synthetic_data.anomaly_detection import IsolationForestModel
+from synthetic_data.behavioural_transformer import TransformerAnomalyModel
+from synthetic_data.behavioural_transformer.schema import SessionSequence
 from synthetic_data.explainability import explain
 from synthetic_data.feature_engineering.feature_schema import FeatureVector
 from synthetic_data.risk_engine import assess_risk
 
 ROOT = Path(__file__).resolve().parent
-DEFAULT_MODEL_PATH = ROOT / "models" / "sentinelai_iforest.joblib"
+DEFAULT_MODEL_PATH = ROOT / "models" / "sentinelai_transformer.pt"
 
 
 def build_feature_vector(
@@ -74,54 +74,43 @@ def build_feature_vector(
     return FeatureVector(**{k: v for k, v in payload.items() if k in allowed})
 
 
-def demo_training_corpus() -> list[FeatureVector]:
-    """Small deterministic corpus used only when preparing a demo model."""
-    vectors: list[FeatureVector] = []
-    for index in range(40):
-        tier = index % 5
-        vectors.append(
-            build_feature_vector(
-                employee_id=f"EMP-{index + 1:03d}",
-                simulation_day="2026-03-10",
-                total_events=15 + index,
-                auth_failure_rate=0.02 * (index % 4) if tier < 3 else 0.45,
-                max_failed_login_streak=index % 3 if tier < 3 else 7,
-                country_change_count=0 if tier < 3 else 2,
-                after_hours_event_count=index % 4 if tier < 3 else 14,
-                download_size_mb_sum=5.0 + index if tier < 4 else 160.0,
-                mass_download_event_count=0 if tier < 4 else 2,
-                resource_entropy=0.5 + (index % 5) * 0.15 if tier < 3 else 2.5,
-                burst_max_5min=5 + (index % 6) if tier < 3 else 28,
-            )
-        )
-    return vectors
+def demo_attack_sequence() -> list[str]:
+    """Short OOD sequence that should elevate Transformer reconstruction error."""
+    return [
+        "DEVICE_CONNECT",
+        "LOGIN",
+        "FAILED_LOGIN",
+        "FAILED_LOGIN",
+        "FAILED_LOGIN",
+        "ADMIN_LOGIN",
+        "SSH_LOGIN",
+        "REMOTE_DESKTOP",
+        "DATABASE_ACCESS",
+        "FILE_DOWNLOAD",
+        "FILE_DOWNLOAD",
+        "USB_INSERT",
+        "FILE_DOWNLOAD",
+        "LOGOUT",
+    ]
 
 
-def prepare_model(path: Path) -> IsolationForestModel:
-    """Fit and persist a demo Isolation Forest (offline preparation only)."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    model = IsolationForestModel(random_state=42, n_estimators=80)
-    model.fit(demo_training_corpus())
-    model.save(path)
-    print(f"Saved fitted model -> {path}")
-    return model
-
-
-def load_model(path: Path) -> IsolationForestModel:
-    """Load a previously fitted model from disk."""
+def load_model(path: Path) -> TransformerAnomalyModel:
+    """Load a previously fitted Behavioural Transformer from disk."""
     if not path.exists():
         raise FileNotFoundError(
             f"Model not found: {path}\n"
-            "Run: python integration.py --prepare-model"
+            "Train first: python train_transformer_model.py"
         )
-    return IsolationForestModel.load(path)
+    return TransformerAnomalyModel.load(path)
 
 
-def run_pipeline(model: IsolationForestModel) -> dict[str, Any]:
+def run_pipeline(model: TransformerAnomalyModel) -> dict[str, Any]:
     """Execute FeatureVector → Predict → Risk → Explain for one employee-day."""
+    sequence = demo_attack_sequence()
     vector = build_feature_vector(
         employee_id="EMP-DEMO",
         simulation_day="2026-03-10",
+        total_events=len(sequence),
         auth_failure_rate=0.58,
         max_failed_login_streak=8,
         country_change_count=3,
@@ -134,7 +123,13 @@ def run_pipeline(model: IsolationForestModel) -> dict[str, Any]:
         burst_max_5min=30,
     )
 
-    prediction = model.predict_one(vector)
+    session = SessionSequence(
+        employee_id=vector.employee_id,
+        session_id=f"DEMO::{vector.employee_id}::{vector.simulation_day}",
+        simulation_day=vector.simulation_day,
+        event_types=sequence,
+    )
+    prediction = model.predict_one_sequence(session)
     assessment = assess_risk(prediction, vector)
     explanation = explain(assessment, vector)
 
@@ -148,7 +143,7 @@ def run_pipeline(model: IsolationForestModel) -> dict[str, Any]:
 
 
 def resolve_model_path() -> Path:
-    """Resolve model path from env or the default demo location."""
+    """Resolve model path from env or the default Transformer location."""
     load_dotenv(ROOT / ".env")
     raw = os.getenv("SENTINELAI_MODEL_PATH", "").strip()
     if not raw:
@@ -160,28 +155,16 @@ def resolve_model_path() -> Path:
 
 
 def main() -> None:
-    """CLI entrypoint for model preparation and full-pipeline demonstration."""
+    """CLI entrypoint for full-pipeline demonstration."""
     parser = argparse.ArgumentParser(description="SentinelAI integration demo")
-    parser.add_argument(
-        "--prepare-model",
-        action="store_true",
-        help="Fit and save a demo Isolation Forest, then run the pipeline",
-    )
-    args = parser.parse_args()
+    parser.parse_args()
 
     model_path = resolve_model_path()
-    if args.prepare_model or not model_path.exists():
-        if not args.prepare_model and not model_path.exists():
-            print(f"Model missing at {model_path}; preparing demo artifact…")
-        model = prepare_model(model_path)
-    else:
-        model = load_model(model_path)
-        print(f"Loaded model <- {model_path}")
+    model = load_model(model_path)
+    print(f"Loaded Behavioural Transformer <- {model_path}")
 
     result = run_pipeline(model)
-    print()
-    print("=== SentinelAI end-to-end result ===")
-    print(json.dumps(result, indent=2, sort_keys=True))
+    print(json.dumps(result, indent=2, default=str))
 
 
 if __name__ == "__main__":

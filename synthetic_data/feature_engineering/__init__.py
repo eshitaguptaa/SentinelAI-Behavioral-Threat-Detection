@@ -1,7 +1,7 @@
 """Feature engineering pipeline for SentinelAI timeline events.
 
 Converts ``TimelineEvent`` streams into per-employee, per-simulation-day
-``FeatureVector`` rows. Behavioural columns for Isolation Forest are exposed
+``FeatureVector`` rows. Behavioural columns for unsupervised detection are exposed
 via ``FeatureVector.ml_features()``; attack ground-truth columns remain on the
 vector for evaluation / dashboards only. This package extracts features only —
 it does not normalise, scale, or train models.

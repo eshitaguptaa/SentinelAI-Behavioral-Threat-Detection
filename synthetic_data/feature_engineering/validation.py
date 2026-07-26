@@ -2,7 +2,7 @@
 
 Checks cover missing / NaN values, duplicate feature keys during merges,
 invalid timestamps on source events, nonsensical counts, entropy / login-hour
-bounds, and Isolation Forest input hygiene (``ml_features()`` must never leak
+bounds, and detector input hygiene (``ml_features()`` must never leak
 identity or attack ground truth).
 """
 
@@ -266,7 +266,7 @@ def validate_feature_dict(
 
 
 def validate_ml_features(vector: FeatureVector) -> list[ValidationError]:
-    """Ensure ``ml_features()`` contains only behavioural Isolation Forest inputs.
+    """Ensure ``ml_features()`` contains only behavioural detector inputs.
 
     Rejects identity fields, labels, and attack ground-truth columns.
     """

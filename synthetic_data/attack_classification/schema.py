@@ -1,6 +1,6 @@
 """Attack classification schema for SentinelAI.
 
-Rule-based labels produced after the Risk Engine. Never uses Isolation Forest
+Rule-based labels produced after the Risk Engine. Never uses the anomaly detector
 weights or attack ground-truth simulator fields.
 """
 

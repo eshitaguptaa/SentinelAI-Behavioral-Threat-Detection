@@ -63,7 +63,7 @@ def _f(features: BehaviourFeatures, name: str, default: float = 0.0) -> float:
 
 
 def rule_high_anomaly_score(anomaly_score: float) -> RuleResult:
-    """Explain elevated Isolation Forest anomalousness (no feature lookup)."""
+    """Explain elevated anomaly score bands (no feature lookup)."""
     if anomaly_score >= 75.0:
         return RuleResult(0.0, "Critical anomaly score")
     if anomaly_score >= 50.0:

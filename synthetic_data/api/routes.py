@@ -3,7 +3,7 @@
 Pipeline (no retraining)::
 
     FeatureVector (+ optional event_sequence)
-        → Anomaly Detector (Transformer or Isolation Forest)
+        → Anomaly Detector (Behavioural Transformer)
         → RiskEngine → AttackClassification → MITRE → Final Status
         → Explainability (+ behavioural insight when Transformer)
 """

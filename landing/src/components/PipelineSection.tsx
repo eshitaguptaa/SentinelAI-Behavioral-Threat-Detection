@@ -9,7 +9,7 @@ const stages = [
   {
     step: "02",
     title: "Anomaly detection",
-    body: "Isolation Forest scores unsupervised deviation from each employee’s normal operating baseline.",
+    body: "A Behavioural Transformer scores unsupervised deviation from each employee’s normal operating baseline.",
   },
   {
     step: "03",

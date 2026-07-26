@@ -5,7 +5,7 @@ simulation day into numerical / categorical fields.
 
 Field roles
 -----------
-* **Behavioural features** — used by Isolation Forest via ``ml_features()``.
+* **Behavioural features** — used by detectors via ``ml_features()``.
 * **Ground-truth / attack fields** — retained on the vector for evaluation,
   metrics, dashboards, and explainability. They are **excluded** from
   ``ml_features()`` so detectors cannot train on labels.
@@ -43,7 +43,7 @@ ATTACK_FEATURE_NAMES: Final[frozenset[str]] = frozenset(
         "max_attack_confidence",
     }
 )
-"""Attack-derived ground-truth columns kept for evaluation, not Isolation Forest."""
+"""Attack-derived ground-truth columns kept for evaluation, not live detection."""
 
 IDENTITY_FIELD_NAMES: Final[frozenset[str]] = frozenset(
     {
@@ -278,13 +278,13 @@ class FeatureVector:
         """Return numerical feature values in ``feature_names()`` order.
 
         Backward-compatible: still includes attack ground-truth fields.
-        For Isolation Forest, use ``ml_features()`` instead.
+        For the behavioural detector input surface, use ``ml_features()`` instead.
         """
         data = self.to_dict()
         return [float(data[name]) for name in self.feature_names()]
 
     def ml_feature_names(self) -> list[str]:
-        """Ordered behavioural feature names suitable for Isolation Forest."""
+        """Ordered behavioural feature names suitable for unsupervised detection."""
         return [name for name in self.feature_names() if name not in ATTACK_FEATURE_NAMES]
 
     def ml_features(self) -> dict[str, float]:
@@ -295,7 +295,7 @@ class FeatureVector:
         * ``employee_id``, ``simulation_day``, ``label``
         * every attack-derived ground-truth field in ``ATTACK_FEATURE_NAMES``
 
-        This is the official Isolation Forest input surface.
+        This is the official behavioural detector input surface.
         """
         data = self.to_dict()
         return {name: float(data[name]) for name in self.ml_feature_names()}
@@ -308,7 +308,7 @@ FEATURE_NAMES: tuple[str, ...] = tuple(
     if f.name not in IDENTITY_FIELD_NAMES
 )
 
-# Behavioural-only feature names for Isolation Forest / Phase 9.
+# Behavioural-only feature names for unsupervised detection.
 ML_FEATURE_NAMES: tuple[str, ...] = tuple(
     name for name in FEATURE_NAMES if name not in ATTACK_FEATURE_NAMES
 )

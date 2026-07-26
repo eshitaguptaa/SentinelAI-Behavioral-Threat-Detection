@@ -51,9 +51,7 @@ API docs (once running): `http://127.0.0.1:8000/docs`
 - pydantic
 - pandas
 - numpy
-- scikit-learn
 - faker
-- joblib
 - python-dotenv
 - websockets
 

@@ -36,8 +36,7 @@ def main() -> None:
     elif not Path(model_path).exists() and not (ROOT / model_path).exists():
         print(
             f"Warning: model file not found at {model_path!r}. "
-            "Train Transformer: python train_transformer_model.py "
-            "or Isolation Forest: python integration.py --prepare-model"
+            "Train Transformer: python train_transformer_model.py"
         )
 
     print(f"Starting SentinelAI API on http://{host}:{port}")

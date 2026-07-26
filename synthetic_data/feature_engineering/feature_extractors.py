@@ -555,7 +555,7 @@ class AttackExtractor:
 
     These fields are retained for evaluation, confusion matrices, dashboards,
     and explainability. They are excluded from ``FeatureVector.ml_features()``
-    so Isolation Forest cannot train on labels.
+    so the detector cannot train on labels.
     """
 
     name = "attack"

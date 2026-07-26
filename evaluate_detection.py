@@ -39,7 +39,7 @@ def _parse_args() -> argparse.Namespace:
         "--model",
         type=Path,
         default=ROOT / "models" / "sentinelai_transformer.pt",
-        help="Path to fitted Transformer (.pt) or Isolation Forest (.joblib).",
+        help="Path to fitted Behavioural Transformer (.pt).",
     )
     parser.add_argument(
         "--events",

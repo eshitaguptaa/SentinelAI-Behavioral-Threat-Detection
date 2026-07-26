@@ -1,4 +1,4 @@
-"""FastAPI route tests with a mocked fitted Isolation Forest.
+"""FastAPI route tests with a mocked Behavioural Transformer.
 
 No model training occurs in this module.
 """

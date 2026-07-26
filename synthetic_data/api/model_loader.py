@@ -1,4 +1,4 @@
-"""Model loading helpers for Isolation Forest and Behavioural Transformer."""
+"""Load the Behavioural Transformer anomaly detector for the inference API."""
 
 from __future__ import annotations
 
@@ -7,22 +7,17 @@ import os
 from pathlib import Path
 from typing import Any
 
-from synthetic_data.anomaly_detection import IsolationForestModel
-from synthetic_data.anomaly_detection.validation import InvalidModelFileError
-
 logger = logging.getLogger(__name__)
 
 MODEL_PATH_ENV = "SENTINELAI_MODEL_PATH"
-DETECTOR_ENV = "SENTINELAI_DETECTOR"
 
 
 def load_anomaly_model(path: str | Path | None = None) -> Any | None:
-    """Load Transformer or Isolation Forest from ``SENTINELAI_MODEL_PATH``.
+    """Load a fitted Behavioural Transformer from ``SENTINELAI_MODEL_PATH``.
 
-    Detection order:
-    1. Explicit ``SENTINELAI_DETECTOR=transformer|iforest``
-    2. File suffix (``.pt`` / ``.pth`` → Transformer, ``.joblib`` → IF)
-    3. Try Transformer, then Isolation Forest
+    Expects a ``.pt`` / ``.pth`` artifact produced by
+    ``train_transformer_model.py``. Returns ``None`` when the path is unset,
+    missing, or fails to load.
     """
     if path is not None:
         raw = str(path).strip()
@@ -35,32 +30,20 @@ def load_anomaly_model(path: str | Path | None = None) -> Any | None:
         logger.warning("Model path does not exist: %s", model_path)
         return None
 
-    preferred = os.environ.get(DETECTOR_ENV, "").strip().lower()
     suffix = model_path.suffix.lower()
+    if suffix not in {".pt", ".pth", ".bin"}:
+        logger.warning(
+            "Unsupported model artifact %s (expected Behavioural Transformer .pt)",
+            model_path,
+        )
+        return None
 
-    def _load_transformer() -> Any | None:
-        try:
-            from synthetic_data.behavioural_transformer import TransformerAnomalyModel
+    try:
+        from synthetic_data.behavioural_transformer import TransformerAnomalyModel
 
-            model = TransformerAnomalyModel.load(model_path)
-            logger.info("Loaded Behavioural Transformer from %s", model_path)
-            return model
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("Failed to load Transformer from %s: %s", model_path, exc)
-            return None
-
-    def _load_iforest() -> Any | None:
-        try:
-            model = IsolationForestModel.load(model_path)
-            logger.info("Loaded Isolation Forest from %s", model_path)
-            return model
-        except (InvalidModelFileError, OSError, ValueError) as exc:
-            logger.warning("Failed to load Isolation Forest from %s: %s", model_path, exc)
-            return None
-
-    if preferred == "transformer" or suffix in {".pt", ".pth", ".bin"}:
-        return _load_transformer()
-    if preferred == "iforest" or suffix in {".joblib", ".pkl"}:
-        return _load_iforest()
-
-    return _load_transformer() or _load_iforest()
+        model = TransformerAnomalyModel.load(model_path)
+        logger.info("Loaded Behavioural Transformer from %s", model_path)
+        return model
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Failed to load Transformer from %s: %s", model_path, exc)
+        return None

@@ -1,8 +1,7 @@
 """FastAPI application factory for the SentinelAI inference API.
 
-Loads a pre-fitted anomaly detector from ``SENTINELAI_MODEL_PATH`` at startup.
-Supports Behavioural Transformer (``.pt``) and Isolation Forest (``.joblib``).
-Never trains or retrains models.
+Loads a pre-fitted Behavioural Transformer from ``SENTINELAI_MODEL_PATH``
+at startup. Never trains or retrains models.
 """
 
 from __future__ import annotations

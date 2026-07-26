@@ -28,7 +28,7 @@ const STAGES = [
   {
     step: "02",
     title: "Anomaly detection",
-    body: "Isolation Forest scores unsupervised deviation from each employee’s normal operating baseline.",
+    body: "A Behavioural Transformer scores unsupervised deviation from each employee’s normal operating baseline.",
   },
   {
     step: "03",
@@ -94,7 +94,7 @@ const FOOTER_COLUMNS = [
 
 const PULSE_ITEMS = [
   "Behavioural baseline online",
-  "Isolation Forest scoring",
+  "Behavioural Transformer scoring",
   "Risk fusion active",
   "Explainability ready",
   "SOC investigation queue",
@@ -379,7 +379,7 @@ export default function LandingPage() {
               {[
                 {
                   label: "Unsupervised",
-                  detail: "Isolation Forest detects deviation without attack label leakage.",
+                  detail: "The Behavioural Transformer detects deviation without attack label leakage.",
                 },
                 {
                   label: "Deterministic risk",
