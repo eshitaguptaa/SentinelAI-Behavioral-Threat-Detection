@@ -1,14 +1,17 @@
 import { memo } from "react";
+import { Crosshair, ShieldAlert, Sparkles, Target } from "lucide-react";
 
 import styles from "./ExplanationPanel.module.css";
 import type { PredictResult } from "../types/models";
-import { ATTACK_COLORS, RISK_COLORS, STATUS_COLORS } from "../types/models";
+import { ATTACK_COLORS } from "../types/models";
 
 interface ExplanationPanelProps {
   result: PredictResult | null;
+  /** When true, omit identity header (page hero already shows it). */
+  embedded?: boolean;
 }
 
-function ExplanationPanel({ result }: ExplanationPanelProps) {
+function ExplanationPanel({ result, embedded = false }: ExplanationPanelProps) {
   if (!result) {
     return (
       <section className={styles.panel} aria-label="Explanation panel">
@@ -23,172 +26,195 @@ function ExplanationPanel({ result }: ExplanationPanelProps) {
 
   const {
     explanation,
-    risk_assessment,
-    prediction,
     attack_classification,
     behaviour_insight: insight,
     mitre,
   } = result;
-  const levelColor =
-    RISK_COLORS[explanation.risk_level] || "var(--text-muted)";
   const attackColor =
     ATTACK_COLORS[attack_classification.attack_type] || "#8a98a8";
-  const statusColor = STATUS_COLORS[result.status] || "var(--text-muted)";
 
   return (
-    <section className={styles.panel} aria-label="Explanation panel">
-      <div className={styles.header}>
-        <div>
-          <h2 className={styles.title}>Explanation</h2>
-          <p className={styles.identity}>
-            {explanation.employee_id} · {explanation.simulation_day}
-          </p>
+    <section
+      className={embedded ? styles.dossier : styles.panel}
+      aria-label="Case briefing"
+    >
+      {!embedded ? (
+        <div className={styles.header}>
+          <div>
+            <h2 className={styles.title}>Explanation</h2>
+            <p className={styles.identity}>
+              {explanation.employee_id} · {explanation.simulation_day}
+            </p>
+          </div>
         </div>
-        <div className={styles.badges}>
-          <span
-            className={styles.level}
-            style={{
-              color: statusColor,
-              borderColor: `${statusColor}66`,
-              background: `${statusColor}1a`,
-            }}
-          >
-            {result.status}
-          </span>
-          <span
-            className={styles.level}
-            style={{
-              color: levelColor,
-              borderColor: `${levelColor}66`,
-              background: `${levelColor}1a`,
-            }}
-          >
-            {explanation.risk_level}
-          </span>
-          <span
-            className={styles.level}
-            style={{
-              color: attackColor,
-              borderColor: `${attackColor}66`,
-              background: `${attackColor}1a`,
-            }}
+      ) : null}
+
+      <div className={styles.grid}>
+        <article className={`${styles.card} ${styles.cardWide}`}>
+          <div className={styles.cardHead}>
+            <div className={styles.cardLead}>
+              <span className={styles.cardIcon} aria-hidden>
+                <Sparkles size={15} strokeWidth={2.25} />
+              </span>
+              <div>
+                <p className={styles.cardKicker}>Narrative</p>
+                <h3 className={styles.cardTitle}>Analyst summary</h3>
+              </div>
+            </div>
+          </div>
+          <p className={styles.cardBody}>{explanation.summary}</p>
+        </article>
+
+        <article className={`${styles.card} ${styles.recommend}`}>
+          <div className={styles.cardHead}>
+            <div className={styles.cardLead}>
+              <span className={styles.cardIconHot} aria-hidden>
+                <ShieldAlert size={15} strokeWidth={2.25} />
+              </span>
+              <div>
+                <p className={styles.cardKicker}>Action</p>
+                <h3 className={styles.cardTitle}>Recommendation</h3>
+              </div>
+            </div>
+          </div>
+          <p className={styles.recommendBody}>{explanation.recommendation}</p>
+        </article>
+
+        {mitre ? (
+          <article className={styles.card}>
+            <div className={styles.cardHead}>
+              <div className={styles.cardLead}>
+                <span className={styles.cardIcon} aria-hidden>
+                  <Crosshair size={15} strokeWidth={2.25} />
+                </span>
+                <div>
+                  <p className={styles.cardKicker}>MITRE ATT&CK</p>
+                  <h3 className={styles.cardTitle}>
+                    {mitre.technique_id}
+                    <span className={styles.techniqueName}>
+                      {mitre.technique_name}
+                    </span>
+                  </h3>
+                </div>
+              </div>
+            </div>
+            <div className={styles.mitreMeta}>
+              <span>{mitre.tactic_name}</span>
+              <span className={styles.mitreId}>{mitre.tactic_id}</span>
+            </div>
+            <p className={styles.cardMuted}>{mitre.description}</p>
+          </article>
+        ) : null}
+
+        <article className={styles.card}>
+          <div className={styles.cardHead}>
+            <div className={styles.cardLead}>
+              <span className={styles.cardIcon} aria-hidden>
+                <Target size={15} strokeWidth={2.25} />
+              </span>
+              <div>
+                <p className={styles.cardKicker}>Classification</p>
+                <h3 className={styles.cardTitle}>Attack type</h3>
+              </div>
+            </div>
+          </div>
+          <p
+            className={styles.attackType}
+            style={{ color: attackColor }}
           >
             {attack_classification.attack_type}
-          </span>
-        </div>
-      </div>
-
-      <div className={styles.scores}>
-        <div>
-          <span className={styles.scoreLabel}>Anomaly</span>
-          <strong>{prediction.normalized_score.toFixed(1)}</strong>
-        </div>
-        <div>
-          <span className={styles.scoreLabel}>Behaviour</span>
-          <strong>
-            {(insight?.behaviour_score ?? 100 - prediction.normalized_score).toFixed(
-              1,
-            )}
-          </strong>
-        </div>
-        <div>
-          <span className={styles.scoreLabel}>Confidence</span>
-          <strong>
-            {Math.round((insight?.confidence_score ?? attack_classification.attack_confidence) * 100)}
-            %
-          </strong>
-        </div>
-        <div>
-          <span className={styles.scoreLabel}>Risk</span>
-          <strong>{risk_assessment.risk_score.toFixed(1)}</strong>
-        </div>
-      </div>
-
-      {mitre ? (
-        <div className={styles.block}>
-          <h3>MITRE ATT&CK</h3>
-          <p>
-            <strong>
-              {mitre.technique_id} · {mitre.technique_name}
-            </strong>
-            {" — "}
-            {mitre.tactic_name} ({mitre.tactic_id})
           </p>
-          <p className={styles.muted}>{mitre.description}</p>
-        </div>
-      ) : null}
+          <p className={styles.cardMuted}>
+            Signature rules when matched; otherwise inferred from Transformer
+            score.
+          </p>
+          {attack_classification.matched_signals.length === 0 ? (
+            <p className={styles.cardMuted}>No matched signals.</p>
+          ) : (
+            <ul className={styles.signalList}>
+              {attack_classification.matched_signals.map((signal) => (
+                <li key={signal}>{signal}</li>
+              ))}
+            </ul>
+          )}
+        </article>
 
-      {insight?.top_suspicious_events?.length ? (
-        <div className={styles.block}>
-          <h3>Top Suspicious Events</h3>
-          <ul>
-            {insight.top_suspicious_events.map((event) => (
-              <li key={`${event.index}-${event.event_type}`}>
-                <strong>
-                  #{event.index + 1} {event.event_type}
-                </strong>
-                {" — "}
-                {event.explanation ||
-                  `reconstruction error ${event.reconstruction_error.toFixed(3)}`}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+        {insight?.top_suspicious_events?.length ? (
+          <article className={`${styles.card} ${styles.cardWide}`}>
+            <div className={styles.cardHead}>
+              <div>
+                <p className={styles.cardKicker}>Priority signals</p>
+                <h3 className={styles.cardTitle}>Top suspicious events</h3>
+              </div>
+              <span className={styles.countBadge}>
+                {insight.top_suspicious_events.length}
+              </span>
+            </div>
+            <ol className={styles.eventList}>
+              {insight.top_suspicious_events.map((event, index) => (
+                <li key={`${event.index}-${event.event_type}`}>
+                  <span className={styles.eventRank}>
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <div className={styles.eventBody}>
+                    <strong>
+                      #{event.index + 1} {event.event_type}
+                    </strong>
+                    <span>
+                      {event.explanation ||
+                        `Reconstruction error ${event.reconstruction_error.toFixed(3)}`}
+                    </span>
+                  </div>
+                  <span className={styles.eventError}>
+                    {event.reconstruction_error.toFixed(3)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </article>
+        ) : null}
 
-      <div className={styles.block}>
-        <h3>Attack Classification</h3>
-        <p>
-          <strong>{attack_classification.attack_type}</strong>
-          {" — "}
-          signature rules when matched; otherwise None / Unknown Behaviour /
-          Behavioural Anomaly from the Transformer score.
-        </p>
-        {attack_classification.matched_signals.length === 0 ? (
-          <p className={styles.muted}>No matched signals.</p>
-        ) : (
-          <ul>
-            {attack_classification.matched_signals.map((signal) => (
-              <li key={signal}>{signal}</li>
-            ))}
-          </ul>
-        )}
-      </div>
+        <article className={styles.card}>
+          <div className={styles.cardHead}>
+            <div>
+              <p className={styles.cardKicker}>Model</p>
+              <h3 className={styles.cardTitle}>Transformer findings</h3>
+            </div>
+            <span className={styles.countBadge}>
+              {explanation.contributing_factors.length}
+            </span>
+          </div>
+          {explanation.contributing_factors.length === 0 ? (
+            <p className={styles.cardMuted}>No Transformer findings recorded.</p>
+          ) : (
+            <ul className={styles.findings}>
+              {explanation.contributing_factors.map((factor) => (
+                <li key={factor}>{factor}</li>
+              ))}
+            </ul>
+          )}
+        </article>
 
-      <div className={styles.block}>
-        <h3>Summary</h3>
-        <p>{explanation.summary}</p>
-      </div>
-
-      <div className={styles.block}>
-        <h3>Transformer Findings</h3>
-        {explanation.contributing_factors.length === 0 ? (
-          <p className={styles.muted}>No Transformer findings recorded.</p>
-        ) : (
-          <ul>
-            {explanation.contributing_factors.map((factor) => (
-              <li key={factor}>{factor}</li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <div className={styles.block}>
-        <h3>Rule Findings</h3>
-        {explanation.observations.length === 0 ? (
-          <p className={styles.muted}>No rule findings triggered.</p>
-        ) : (
-          <ul>
-            {explanation.observations.map((observation) => (
-              <li key={observation}>{observation}</li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <div className={`${styles.block} ${styles.recommendation}`}>
-        <h3>Recommendation</h3>
-        <p>{explanation.recommendation}</p>
+        <article className={styles.card}>
+          <div className={styles.cardHead}>
+            <div>
+              <p className={styles.cardKicker}>Rules</p>
+              <h3 className={styles.cardTitle}>Rule findings</h3>
+            </div>
+            <span className={styles.countBadge}>
+              {explanation.observations.length}
+            </span>
+          </div>
+          {explanation.observations.length === 0 ? (
+            <p className={styles.cardMuted}>No rule findings triggered.</p>
+          ) : (
+            <ul className={styles.findings}>
+              {explanation.observations.map((observation) => (
+                <li key={observation}>{observation}</li>
+              ))}
+            </ul>
+          )}
+        </article>
       </div>
     </section>
   );

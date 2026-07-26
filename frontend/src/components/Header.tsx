@@ -1,3 +1,6 @@
+import { Link } from "react-router-dom";
+
+import { Logo } from "./Logo";
 import styles from "./Header.module.css";
 
 import type { BackendStatus } from "../types/models";
@@ -17,17 +20,20 @@ export default function Header({ backendStatus, appVersion }: HeaderProps) {
   return (
     <header className={styles.header}>
       <div className={styles.brandBlock}>
-        <div className={styles.mark} aria-hidden />
-        <div>
-          <h1 className={styles.title}>SentinelAI</h1>
-          <p className={styles.subtitle}>SOC Dashboard</p>
-        </div>
+        <Link to="/" className={styles.brandLink} aria-label="Back to SentinelAI home">
+          <Logo withWordmark={false} size={32} />
+          <div>
+            <span className={styles.title}>SentinelAI</span>
+            <p className={styles.subtitle}>SOC Dashboard</p>
+          </div>
+        </Link>
       </div>
 
       <div className={styles.meta}>
-        {appVersion ? (
-          <span className={styles.version}>v{appVersion}</span>
-        ) : null}
+        <Link to="/" className={styles.homeLink}>
+          ← Landing
+        </Link>
+        {appVersion ? <span className={styles.version}>v{appVersion}</span> : null}
         <div
           className={`${styles.status} ${styles[backendStatus]}`}
           role="status"

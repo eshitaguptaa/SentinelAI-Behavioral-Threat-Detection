@@ -1,36 +1,96 @@
 .panel {
-  border-radius: 0.9rem;
-  background: var(--surface);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-card);
-  padding: 1rem 1.1rem 0.75rem;
+  padding: 1.15rem 1.2rem 1rem;
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--hw-red), transparent 70%);
+  opacity: 0.85;
 }
 
 .header {
-  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.kicker {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hw-red);
 }
 
 .title {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
+  margin: 0.3rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   color: var(--text-primary);
 }
 
 .caption {
-  margin: 0.25rem 0 0;
-  font-size: 0.8rem;
+  margin: 0.3rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
   color: var(--text-muted);
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.total,
+.peak {
+  padding: 0.32rem 0.55rem;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.peak {
+  border-color: color-mix(in srgb, var(--hw-red) 28%, white);
+  background: var(--accent-soft);
+  color: var(--hw-red-deep);
 }
 
 .chartWrap {
   width: 100%;
-  min-height: 260px;
+  min-width: 0;
+  height: 280px;
 }
 
 .empty {
   margin: 0;
-  padding: 3rem 1rem;
+  padding: 4rem 1rem;
   text-align: center;
   color: var(--text-muted);
   font-size: 0.9rem;

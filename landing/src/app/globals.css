@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --hw-red: #e4002b;
+  --hw-red-deep: #a80020;
+  --hw-ink: #111111;
+  --hw-mist: #f4f4f4;
+  --hw-steel: #6b6b6b;
+  --hw-ash: #2a2a2a;
+  --background: #ffffff;
+  --foreground: #111111;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--hw-red) 28%, white);
+  color: var(--hw-ink);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .hw-gradient-red {
+    background: linear-gradient(
+      135deg,
+      #ff1f3d 0%,
+      var(--hw-red) 42%,
+      var(--hw-red-deep) 100%
+    );
+  }
+
+  .hw-mesh {
+    background-color: #0f0f10;
+    background-image:
+      radial-gradient(ellipse 80% 55% at 15% 20%, rgba(228, 0, 43, 0.28), transparent 55%),
+      radial-gradient(ellipse 60% 45% at 85% 15%, rgba(228, 0, 43, 0.12), transparent 50%),
+      radial-gradient(ellipse 70% 50% at 70% 90%, rgba(40, 40, 45, 0.9), transparent 55%),
+      linear-gradient(180deg, #121214 0%, #0a0a0b 100%);
+  }
+
+  .hw-grid {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 72px 72px;
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition:
+      opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .delay-1 {
+    transition-delay: 0.12s;
+  }
+  .delay-2 {
+    transition-delay: 0.24s;
+  }
+  .delay-3 {
+    transition-delay: 0.36s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}

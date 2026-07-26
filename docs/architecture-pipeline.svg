@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="220" viewBox="0 0 960 220" role="img" aria-labelledby="title desc">
+  <title id="title">SentinelAI inference pipeline</title>
+  <desc id="desc">Events to features to detector to risk to API to SOC dashboard</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#667085"/>
+    </marker>
+  </defs>
+  <rect width="960" height="220" fill="#F3F3F3"/>
+  <g font-family="Segoe UI, Helvetica, Arial, sans-serif">
+    <rect x="20" y="70" width="130" height="80" fill="#FFFFFF" stroke="#111111" stroke-opacity="0.14"/>
+    <text x="85" y="105" text-anchor="middle" font-size="13" font-weight="700" fill="#111111">Events</text>
+    <text x="85" y="125" text-anchor="middle" font-size="11" fill="#667085">CSV / Excel</text>
+
+    <line x1="150" y1="110" x2="178" y2="110" stroke="#667085" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="180" y="70" width="130" height="80" fill="#FFFFFF" stroke="#111111" stroke-opacity="0.14"/>
+    <text x="245" y="105" text-anchor="middle" font-size="13" font-weight="700" fill="#111111">Features</text>
+    <text x="245" y="125" text-anchor="middle" font-size="11" fill="#667085">FeatureVector</text>
+
+    <line x1="310" y1="110" x2="338" y2="110" stroke="#667085" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="340" y="70" width="150" height="80" fill="#111111"/>
+    <rect x="340" y="70" width="4" height="80" fill="#E4002B"/>
+    <text x="419" y="105" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">Transformer</text>
+    <text x="419" y="125" text-anchor="middle" font-size="11" fill="#FF8A9E">Anomaly score</text>
+
+    <line x1="490" y1="110" x2="518" y2="110" stroke="#667085" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="520" y="70" width="130" height="80" fill="#FFFFFF" stroke="#111111" stroke-opacity="0.14"/>
+    <text x="585" y="100" text-anchor="middle" font-size="13" font-weight="700" fill="#111111">Risk + MITRE</text>
+    <text x="585" y="120" text-anchor="middle" font-size="11" fill="#667085">Status / explain</text>
+
+    <line x1="650" y1="110" x2="678" y2="110" stroke="#667085" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="680" y="70" width="110" height="80" fill="#FFFFFF" stroke="#111111" stroke-opacity="0.14"/>
+    <text x="735" y="105" text-anchor="middle" font-size="13" font-weight="700" fill="#111111">FastAPI</text>
+    <text x="735" y="125" text-anchor="middle" font-size="11" fill="#667085">/predict*</text>
+
+    <line x1="790" y1="110" x2="818" y2="110" stroke="#667085" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="820" y="70" width="120" height="80" fill="#E4002B"/>
+    <text x="880" y="105" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">SOC UI</text>
+    <text x="880" y="125" text-anchor="middle" font-size="11" fill="#FFFFFF" fill-opacity="0.85">Investigate</text>
+  </g>
+</svg>

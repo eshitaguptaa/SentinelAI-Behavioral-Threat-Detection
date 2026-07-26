@@ -150,17 +150,17 @@ export interface RiskDistributionPoint {
 }
 
 export const RISK_COLORS: Record<string, string> = {
-  LOW: "#3dba7a",
-  MEDIUM: "#e4c35a",
-  HIGH: "#e08a3c",
-  CRITICAL: "#e24b4b",
+  LOW: "#1f8a5b",
+  MEDIUM: "#c48a1a",
+  HIGH: "#d2641f",
+  CRITICAL: "#e4002b",
 };
 
 export const STATUS_COLORS: Record<string, string> = {
-  Normal: "#3dba7a",
-  Suspicious: "#e4c35a",
-  "Under Investigation": "#e08a3c",
-  "Confirmed Threat": "#e24b4b",
+  Normal: "#1f8a5b",
+  Suspicious: "#c48a1a",
+  "Under Investigation": "#d2641f",
+  "Confirmed Threat": "#e4002b",
 };
 
 /** Unique badge colours per attack classification label. */

@@ -1,44 +1,90 @@
 .card {
-  border-radius: 0.85rem;
-  padding: 1rem 1.1rem;
-  background: var(--surface);
+  position: relative;
+  padding: 1.2rem 1.2rem 1.25rem;
+  background:
+    linear-gradient(165deg, #ffffff 0%, #f8f8f8 100%);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-card);
-  min-height: 6.25rem;
+  min-height: 7rem;
+  overflow: hidden;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(17, 17, 17, 0.06);
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #d4d4d4;
+}
+
+.card::after {
+  content: "";
+  position: absolute;
+  right: -1.5rem;
+  top: -1.5rem;
+  width: 5rem;
+  height: 5rem;
+  background: radial-gradient(circle, rgba(17, 17, 17, 0.035), transparent 70%);
+  pointer-events: none;
 }
 
 .label {
   margin: 0;
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
 
 .value {
-  margin: 0.55rem 0 0;
+  margin: 0.75rem 0 0;
   font-family: var(--font-display);
-  font-size: 1.85rem;
-  font-weight: 650;
+  font-size: 2.15rem;
+  font-weight: 750;
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
   line-height: 1;
+  letter-spacing: -0.04em;
 }
 
 .hint {
-  margin: 0.55rem 0 0;
-  font-size: 0.75rem;
+  margin: 0.7rem 0 0;
+  font-size: 0.76rem;
   color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.anomaly::before,
+.high::before,
+.critical::before {
+  background: var(--hw-red);
 }
 
 .anomaly .value {
-  color: #7ec8ff;
+  color: #1d6fd8;
 }
 
 .high .value {
-  color: #e08a3c;
+  color: var(--risk-high);
+}
+
+.high::before {
+  background: var(--risk-high);
 }
 
 .critical .value {
-  color: #e24b4b;
+  color: var(--hw-red);
+}
+
+.critical::before {
+  background: var(--hw-red);
 }

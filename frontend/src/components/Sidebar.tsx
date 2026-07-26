@@ -1,41 +1,75 @@
+import { Link, NavLink } from "react-router-dom";
+import {
+  Activity,
+  ArrowLeft,
+  History,
+  LayoutDashboard,
+  ListChecks,
+  ShieldAlert,
+  Server,
+  Upload,
+} from "lucide-react";
+
+import { useAnalysis } from "../contexts/AnalysisContext";
+import { Logo } from "./Logo";
 import styles from "./Sidebar.module.css";
 
-export type SidebarSection =
-  | "dashboard"
-  | "predictions"
-  | "risk"
-  | "explainability"
-  | "system";
+export default function Sidebar() {
+  const { rows, history, hydrating } = useAnalysis();
+  const unlocked = !hydrating && (rows.length > 0 || history.length > 0);
 
-interface SidebarProps {
-  active: SidebarSection;
-  onNavigate: (section: SidebarSection) => void;
-}
+  const navItems = unlocked
+    ? [
+        { to: "/app", end: true, label: "Upload", icon: Upload },
+        { to: "/app/overview", end: false, label: "Overview", icon: LayoutDashboard },
+        { to: "/app/risk", end: false, label: "Risk Analysis", icon: Activity },
+        { to: "/app/predictions", end: false, label: "Predictions", icon: ListChecks },
+        { to: "/app/investigate", end: false, label: "Investigate", icon: ShieldAlert },
+        { to: "/app/system", end: false, label: "System", icon: Server },
+        { to: "/app/history", end: false, label: "History", icon: History },
+      ]
+    : [
+        { to: "/app", end: true, label: "Upload", icon: Upload },
+        { to: "/app/system", end: false, label: "System", icon: Server },
+      ];
 
-const ITEMS: { id: SidebarSection; label: string }[] = [
-  { id: "dashboard", label: "Dashboard" },
-  { id: "predictions", label: "Predictions" },
-  { id: "risk", label: "Risk Analysis" },
-  { id: "explainability", label: "Explainability" },
-  { id: "system", label: "System Status" },
-];
-
-export default function Sidebar({ active, onNavigate }: SidebarProps) {
   return (
     <aside className={styles.sidebar} aria-label="SOC navigation">
-      <p className={styles.sectionLabel}>Operations</p>
-      <nav className={styles.nav}>
-        {ITEMS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            className={`${styles.link} ${active === item.id ? styles.active : ""}`}
-            onClick={() => onNavigate(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </nav>
+      <Link to="/app" className={styles.brand} aria-label="SentinelAI workspace home">
+        <Logo withWordmark={false} size={32} />
+        <span className={styles.brandText}>
+          <span className={styles.brandName}>SentinelAI</span>
+          <span className={styles.brandSub}>SOC Workspace</span>
+        </span>
+      </Link>
+
+      <div>
+        <p className={styles.sectionLabel}>Navigate</p>
+        <nav className={styles.nav}>
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  `${styles.link} ${isActive ? styles.active : ""}`
+                }
+              >
+                <Icon className={styles.icon} aria-hidden />
+                {item.label}
+              </NavLink>
+            );
+          })}
+        </nav>
+      </div>
+
+      <div className={styles.footer}>
+        <Link to="/" className={styles.landingLink} aria-label="Back to landing page">
+          <ArrowLeft className={styles.landingIcon} aria-hidden />
+        </Link>
+      </div>
     </aside>
   );
 }

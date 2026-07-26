@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { ArrowUpRight } from "lucide-react";
 
 import styles from "./EmployeeTable.module.css";
 import type { EmployeeRiskRow } from "../types/models";
@@ -8,6 +9,7 @@ interface EmployeeTableProps {
   rows: EmployeeRiskRow[];
   selectedId: string | null;
   onSelect: (row: EmployeeRiskRow) => void;
+  sortKey?: "risk" | "anomaly" | "employee";
 }
 
 function formatScore(value: number): string {
@@ -18,34 +20,52 @@ function formatConfidence(value: number): string {
   return `${Math.round(value * 100)}%`;
 }
 
-function EmployeeTable({ rows, selectedId, onSelect }: EmployeeTableProps) {
+function EmployeeTable({
+  rows,
+  selectedId,
+  onSelect,
+  sortKey = "risk",
+}: EmployeeTableProps) {
   return (
     <section className={styles.panel} aria-label="Employee risk table">
       <div className={styles.header}>
-        <h2 className={styles.title}>Employee Predictions</h2>
-        <p className={styles.caption}>{rows.length} employee-day rows</p>
+        <div>
+          <p className={styles.kicker}>Queue</p>
+          <h2 className={styles.title}>Employee predictions</h2>
+          <p className={styles.caption}>
+            {rows.length === 0
+              ? "No rows match the current filters"
+              : `${rows.length} ranked row${rows.length === 1 ? "" : "s"} · click to investigate`}
+          </p>
+        </div>
+        <span className={styles.headerBadge}>
+          Sorted by {sortKey === "employee" ? "ID" : sortKey}
+        </span>
       </div>
 
       <div className={styles.tableWrap}>
         {rows.length === 0 ? (
           <p className={styles.empty}>
-            No employees loaded. Run analysis to populate this table.
+            No employees match. Clear filters or adjust search.
           </p>
         ) : (
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Employee ID</th>
-                <th>Simulation Day</th>
-                <th>Anomaly Score</th>
-                <th>Risk Score</th>
-                <th>Risk Level</th>
-                <th>Attack Type</th>
+                <th className={styles.colRank}>#</th>
+                <th>Employee</th>
+                <th>Risk</th>
+                <th>Anomaly</th>
+                <th>Level</th>
+                <th>Attack</th>
                 <th>Status</th>
+                <th className={styles.colAction}>
+                  <span className={styles.visuallyHidden}>Open</span>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => {
+              {rows.map((row, index) => {
                 const selected = row.id === selectedId;
                 const levelColor =
                   RISK_COLORS[row.risk_level] || "var(--text-muted)";
@@ -53,6 +73,9 @@ function EmployeeTable({ rows, selectedId, onSelect }: EmployeeTableProps) {
                   ATTACK_COLORS[row.attack_type] || "#8a98a8";
                 const statusColor =
                   STATUS_COLORS[row.status] || "var(--text-muted)";
+                const riskPct = Math.max(4, Math.min(100, row.risk_score));
+                const anomalyPct = Math.max(4, Math.min(100, row.anomaly_score));
+
                 return (
                   <tr
                     key={row.id}
@@ -67,50 +90,102 @@ function EmployeeTable({ rows, selectedId, onSelect }: EmployeeTableProps) {
                     tabIndex={0}
                     role="button"
                     aria-pressed={selected}
+                    style={{ animationDelay: `${Math.min(index, 12) * 0.03}s` }}
                   >
-                    <td className={styles.mono}>{row.employee_id}</td>
-                    <td>{row.simulation_day}</td>
-                    <td className={styles.mono}>
-                      {formatScore(row.anomaly_score)}
+                    <td className={styles.colRank}>
+                      <span
+                        className={`${styles.rank} ${index < 3 ? styles.rankHot : ""}`}
+                      >
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
                     </td>
-                    <td className={styles.mono}>
-                      {formatScore(row.risk_score)}
+                    <td>
+                      <div className={styles.employeeCell}>
+                        <strong className={styles.mono}>{row.employee_id}</strong>
+                        <span>{row.simulation_day}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className={styles.scoreCell}>
+                        <strong
+                          className={styles.mono}
+                          style={{ color: levelColor }}
+                        >
+                          {formatScore(row.risk_score)}
+                        </strong>
+                        <span
+                          className={styles.meter}
+                          aria-hidden
+                        >
+                          <i
+                            style={{
+                              width: `${riskPct}%`,
+                              background: levelColor,
+                            }}
+                          />
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className={styles.scoreCell}>
+                        <strong className={styles.mono}>
+                          {formatScore(row.anomaly_score)}
+                        </strong>
+                        <span className={styles.meter} aria-hidden>
+                          <i
+                            style={{
+                              width: `${anomalyPct}%`,
+                              background: "#d2641f",
+                            }}
+                          />
+                        </span>
+                      </div>
                     </td>
                     <td>
                       <span
                         className={styles.badge}
                         style={{
                           color: levelColor,
-                          borderColor: `${levelColor}66`,
-                          background: `${levelColor}1a`,
+                          borderColor: `${levelColor}55`,
+                          background: `${levelColor}14`,
                         }}
                       >
                         {row.risk_level}
                       </span>
                     </td>
                     <td>
-                      <span
-                        className={styles.badge}
-                        title={`Confidence ${formatConfidence(row.attack_confidence)}`}
-                        style={{
-                          color: attackColor,
-                          borderColor: `${attackColor}66`,
-                          background: `${attackColor}1a`,
-                        }}
-                      >
-                        {row.attack_type}
-                      </span>
+                      <div className={styles.attackCell}>
+                        <span
+                          className={styles.badge}
+                          title={`Confidence ${formatConfidence(row.attack_confidence)}`}
+                          style={{
+                            color: attackColor,
+                            borderColor: `${attackColor}55`,
+                            background: `${attackColor}14`,
+                          }}
+                        >
+                          {row.attack_type}
+                        </span>
+                        <span className={styles.conf}>
+                          {formatConfidence(row.attack_confidence)}
+                        </span>
+                      </div>
                     </td>
                     <td>
                       <span
                         className={styles.badge}
                         style={{
                           color: statusColor,
-                          borderColor: `${statusColor}66`,
-                          background: `${statusColor}1a`,
+                          borderColor: `${statusColor}55`,
+                          background: `${statusColor}14`,
                         }}
                       >
                         {row.status}
+                      </span>
+                    </td>
+                    <td className={styles.colAction}>
+                      <span className={styles.openCue} aria-hidden>
+                        <ArrowUpRight size={15} />
                       </span>
                     </td>
                   </tr>

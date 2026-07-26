@@ -1,77 +1,159 @@
 # SentinelAI
 
-**Behavioural anomaly detection and risk intelligence for enterprise security operations.**
+<p align="center">
+  <img src="docs/logo.svg" alt="SentinelAI" width="280"/>
+</p>
 
-SentinelAI is an end-to-end cybersecurity platform that generates realistic enterprise activity, extracts behavioural features, detects anomalies with Isolation Forest, scores risk with deterministic rules, explains findings for SOC analysts, and exposes the full pipeline through FastAPI and a React SOC dashboard.
+<p align="center">
+  <strong>Behavioural anomaly detection and risk intelligence for security operations.</strong>
+</p>
 
-This repository is structured as a polished final-year / portfolio project suitable for demonstration, evaluation, and GitHub publication.
+<p align="center">
+  Unsupervised detection · Deterministic risk · MITRE mapping · SOC case investigation
+</p>
 
 ---
 
-## Project Overview
+## What it is
 
-SentinelAI answers a practical SOC question:
+SentinelAI is an end-to-end platform that turns employee activity into actionable threat cases. It scores how anomalous a session looks, fuses that signal with enterprise rules into a risk level, classifies likely attack behaviour, maps MITRE ATT&CK techniques, and explains the finding for an analyst — all through a FastAPI backend and a React SOC workspace.
+
+It answers a practical SOC question:
 
 > Given one employee’s activity on one simulation day, how anomalous is the behaviour, how severe is the enterprise risk, and why?
 
-The system is **strictly unsupervised for detection** (Isolation Forest) and **deterministic for risk & explainability** (no attack ground-truth leakage into production scoring).
+**Detection is unsupervised** (Behavioural Transformer by default, Isolation Forest as legacy). **Risk, attack labels, and recommendations are deterministic** — no attack ground-truth leakage into live scoring.
 
 ---
 
-## Architecture Diagram
+## Highlights
 
-```text
-Timeline Events
-        ↓
-Feature Engineering          (Phase 8 — FeatureVector / ml_features)
-        ↓
-Isolation Forest             (Phase 9 — AnomalyPrediction)
-        ↓
-Risk Engine                  (Phase 10 — RiskAssessment)
-        ↓
-Explainability Engine        (Phase 11 — RiskExplanation)
-        ↓
-FastAPI Backend              (Phase 12 — REST /predict, /predict/batch)
-        ↓
-React SOC Dashboard          (Phase 13 — visualisation & investigation)
+| Area | Capability |
+|------|------------|
+| Detection | Behavioural Transformer (reconstruction + attention) or Isolation Forest |
+| Risk | Deterministic LOW / MEDIUM / HIGH / CRITICAL scoring |
+| Classification | Rule-based attack types + MITRE ATT&CK mapping |
+| Explainability | Plain-language summary, factors, observations, recommended response |
+| Evidence | Behaviour timeline + interactive attention map |
+| Ingest | Excel workbook upload or built-in sample batch |
+| Surfaces | React SOC app, FastAPI OpenAPI docs, optional Next.js marketing site |
+
+---
+
+## Architecture
+
+<p align="center">
+  <img src="docs/architecture-pipeline.svg" alt="SentinelAI inference pipeline" width="960"/>
+</p>
+
+```mermaid
+flowchart LR
+  A[Events / Excel / CSV] --> B[Feature engineering]
+  B --> C{Detector}
+  C -->|default| D[Behavioural Transformer]
+  C -->|legacy| E[Isolation Forest]
+  D --> F[AnomalyPrediction]
+  E --> F
+  F --> G[Risk engine]
+  G --> H[Attack + MITRE]
+  H --> I[Explainability]
+  I --> J[FastAPI /predict*]
+  J --> K[SOC dashboard]
 ```
 
-Supporting synthesis layers (Phases 1–7) produce the enterprise, behaviour profiles, multi-day timelines, and attack-injected datasets used for evaluation — not for live risk scoring labels.
+### Inference chain (API)
+
+1. Load detector from `SENTINELAI_MODEL_PATH` (never trains at request time)
+2. Score anomaly → normalized score + `is_anomaly`
+3. Risk engine → score, level, recommendation
+4. Attack classification → type + matched signals
+5. MITRE mapping → tactic / technique
+6. Final SOC status → Normal / Suspicious / Under Investigation / Confirmed Threat
+7. Explainability (+ Transformer behaviour insight, timeline errors, attention when available)
 
 ---
 
-## Technology Stack
+## SOC analyst workflow
 
-| Layer | Technology |
-|-------|------------|
-| Synthetic data | Python, dataclasses, Faker |
-| Feature engineering | Pure Python numerical features |
-| Anomaly detection | scikit-learn Isolation Forest |
-| Risk & explainability | Deterministic rule engines |
+<p align="center">
+  <img src="docs/soc-workflow.svg" alt="SOC workflow from upload to investigate" width="960"/>
+</p>
+
+| Step | Route | Purpose |
+|------|-------|---------|
+| 01 Upload | `/app` | Load Excel or sample feature vectors |
+| 02 Overview | `/app/overview` | Batch totals and confirmed threats |
+| 03 Risk | `/app/risk` | Spectrum, curve, watchlist |
+| 04 Predictions | `/app/predictions` | Filter, sort, open a case |
+| 05 Investigate | `/app/investigate` | Brief, signals, timeline, attention |
+| System | `/app/system` | API health and session load |
+| History | `/app/history` | Restore prior analysis reports |
+
+---
+
+## Repository layout
+
+```text
+SentinelAI-Behavioral-Threat-Detection/
+├── README.md
+├── requirements.txt
+├── .env.example
+├── run_backend.py                 # Start FastAPI (no training)
+├── run_frontend.py                # Prints frontend run instructions
+├── train_transformer_model.py     # Train Behavioural Transformer
+├── calibrate_anomaly.py           # Calibrate score mapping
+├── integration.py                 # IF demo + --prepare-model
+├── synthetic_data/                # Active Python pipeline + API
+│   ├── generators/                # Enterprise / profiles / timelines
+│   ├── attacks/                   # Attack injection (evaluation data)
+│   ├── feature_engineering/       # FeatureVector construction
+│   ├── behavioural_transformer/   # Model, train, dataset
+│   ├── anomaly_detection/         # Isolation Forest (legacy)
+│   ├── risk_engine/
+│   ├── attack_classification/
+│   ├── mitre/
+│   ├── explainability/
+│   └── api/                       # FastAPI app (synthetic_data.api.app)
+├── frontend/                      # Vite + React SOC workspace
+├── landing/                       # Next.js marketing site (optional)
+├── models/                        # .pt / .joblib / .meta.json artifacts
+├── datasets/                      # employees, profiles, events CSVs
+├── docs/                          # Diagrams + screenshots
+├── tests/                         # pytest
+└── backend/                       # Legacy scaffold (not used by run_backend.py)
+```
+
+---
+
+## Technology stack
+
+| Layer | Stack |
+|-------|--------|
+| Data & features | Python, pandas, numpy, Faker |
+| Detection | PyTorch (Transformer), scikit-learn / joblib (Isolation Forest) |
 | API | FastAPI, Pydantic, Uvicorn |
-| Dashboard | React 18+, TypeScript, Vite, Axios, Recharts |
+| SOC UI | React 19, TypeScript, Vite, Axios, Recharts, Framer Motion |
+| Marketing | Next.js 14, Tailwind CSS |
 | Tests | pytest |
 
 ---
 
-## Installation
-
-### Prerequisites
+## Prerequisites
 
 - Python **3.11+**
 - Node.js **18+** and npm
 - Git
 
-### Clone
+---
+
+## Quick start
+
+### 1. Clone and Python env
 
 ```bash
 git clone <your-repo-url>
-cd SentinelAI
-```
+cd SentinelAI-Behavioral-Threat-Detection
 
-### Python environment
-
-```bash
 python -m venv .venv
 
 # Windows
@@ -83,189 +165,303 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Environment file
+### 2. Environment
 
 ```bash
-copy .env.example .env          # Windows
-# cp .env.example .env          # macOS / Linux
+# Windows
+copy .env.example .env
+
+# macOS / Linux
+cp .env.example .env
 ```
 
-Edit `.env` and set `SENTINELAI_MODEL_PATH` after you create a fitted model (see below).
+Minimal `.env`:
 
----
+```env
+SENTINELAI_MODEL_PATH=models/sentinelai_transformer.pt
+API_HOST=127.0.0.1
+API_PORT=8000
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
 
-## Backend Setup
+Optional:
 
-1. Activate the virtual environment and install `requirements.txt` (above).
-2. Produce a fitted Isolation Forest artifact (one-time, outside the API):
+```env
+# Force detector when the path is ambiguous
+# SENTINELAI_DETECTOR=transformer
+# SENTINELAI_DETECTOR=iforest
+```
+
+Also set `VITE_API_BASE_URL` in `frontend/.env` if you prefer app-local config.
+
+### 3. Model artifact
+
+**Preferred — Behavioural Transformer** (repo default):
+
+```bash
+# From synthetic timelines
+python train_transformer_model.py
+
+# Or from the checked-in events CSV
+python train_transformer_model.py --from-events datasets/events.csv
+```
+
+Writes `models/sentinelai_transformer.pt` (+ metadata). Optionally calibrate:
+
+```bash
+python calibrate_anomaly.py
+```
+
+**Legacy — Isolation Forest:**
 
 ```bash
 python integration.py --prepare-model
 ```
 
-This writes `models/sentinelai_iforest.joblib` and prints a sample end-to-end JSON result.
+Writes `models/sentinelai_iforest.joblib`. Point `SENTINELAI_MODEL_PATH` at that file.
 
-3. Point `.env` at that file:
+> The API **never retrains**. It only loads the configured artifact.
 
-```env
-SENTINELAI_MODEL_PATH=models/sentinelai_iforest.joblib
-API_HOST=127.0.0.1
-API_PORT=8000
-```
-
-4. Start the API:
+### 4. Start the backend
 
 ```bash
 python run_backend.py
 ```
 
-- OpenAPI / Swagger: http://127.0.0.1:8000/docs  
-- Health: http://127.0.0.1:8000/health  
+| URL | Purpose |
+|-----|---------|
+| http://127.0.0.1:8000/docs | OpenAPI / Swagger |
+| http://127.0.0.1:8000/health | Liveness |
+| http://127.0.0.1:8000/ | App metadata |
 
-The API **never retrains** models. It only loads `SENTINELAI_MODEL_PATH`.
-
----
-
-## Frontend Setup
+### 5. Start the SOC frontend
 
 ```bash
 cd frontend
 npm install
-```
-
-Ensure the Vite app can reach the API (also documented in `.env.example`):
-
-```env
-VITE_API_BASE_URL=http://127.0.0.1:8000
-```
-
-You can set this in `frontend/.env` or export it in your shell before `npm run dev`.
-
----
-
-## Running Instructions
-
-### Option A — helper scripts
-
-```bash
-# Terminal 1
-python run_backend.py
-
-# Terminal 2
-python run_frontend.py
-# then follow the printed npm commands
-```
-
-### Option B — manual
-
-```bash
-# Terminal 1
-uvicorn synthetic_data.api.app:app --host 127.0.0.1 --port 8000 --reload
-
-# Terminal 2
-cd frontend
 npm run dev
 ```
 
-### End-to-end Python demo (no UI)
+Open http://127.0.0.1:5173 — use **Upload** (or sample data), then walk Overview → Risk → Predictions → Investigate.
+
+Helper (prints the same steps):
 
 ```bash
-python integration.py
+python run_frontend.py
 ```
 
-### Tests
+### 6. Optional marketing site
 
 ```bash
-pytest tests/ -q
+cd landing
+npm install
+npm run dev
 ```
 
-Tests use **mocks / deterministic fixtures** and do **not** retrain Isolation Forest models.
+Open http://localhost:3000.
 
 ---
 
-## API Endpoints
+## API reference
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/` | Application metadata |
-| `GET` | `/health` | Liveness probe |
-| `POST` | `/predict` | Single feature vector → anomaly + risk + explanation |
-| `POST` | `/predict/batch` | Batch inference |
+| `GET` | `/` | Application metadata (`version` 2.0) |
+| `GET` | `/health` | Liveness (model not required) |
+| `POST` | `/predict` | Single feature vector → full case payload |
+| `POST` | `/predict/batch` | Batch inference for SOC upload |
 
-Example:
+### Example — single prediction
 
 ```bash
+curl -X POST http://127.0.0.1:8000/predict \
+  -H "Content-Type: application/json" \
+  -d "{\"feature_vector\":{\"employee_id\":\"EMP-001\",\"simulation_day\":\"2026-03-10\",\"total_events\":40}}"
+```
+
+Windows `cmd.exe`:
+
+```bat
 curl -X POST http://127.0.0.1:8000/predict ^
   -H "Content-Type: application/json" ^
   -d "{\"feature_vector\":{\"employee_id\":\"EMP-001\",\"simulation_day\":\"2026-03-10\",\"total_events\":40}}"
 ```
 
+A successful response includes:
+
+- `prediction` — raw / normalized anomaly scores  
+- `risk_assessment` — score, level, recommendation  
+- `attack_classification` — attack type + matched signals  
+- `status` — final SOC status  
+- `explanation` — summary, factors, observations  
+- `mitre` — tactic / technique when mapped  
+- `behaviour_insight` — timeline errors, attention, top events (Transformer)
+
 ---
 
-## Folder Structure
+## Frontend deep dive
 
-```text
-SentinelAI/
-├── README.md
-├── requirements.txt
-├── .env.example
-├── run_backend.py
-├── run_frontend.py
-├── integration.py
-├── tests/
-│   ├── test_pipeline.py
-│   ├── test_api.py
-│   ├── test_risk_engine.py
-│   └── test_explainability.py
-├── synthetic_data/
-│   ├── generators/          # Enterprise, profiles, timelines
-│   ├── attacks/             # Attack injection techniques
-│   ├── feature_engineering/ # Phase 8
-│   ├── anomaly_detection/   # Phase 9
-│   ├── risk_engine/         # Phase 10
-│   ├── explainability/      # Phase 11
-│   └── api/                 # Phase 12 FastAPI
-├── frontend/                # Phase 13 React SOC dashboard
-├── models/                  # Fitted Isolation Forest artifacts (local)
-├── datasets/
-├── docs/
-└── backend/                 # Legacy / alternate FastAPI workspace
+### Pages
+
+| Page | What you get |
+|------|----------------|
+| **Upload** | Drag-and-drop Excel or load sample vectors → `POST /predict/batch` |
+| **Overview** | Employees, confirmed threats, high/critical counts, workflow CTAs |
+| **Risk** | Exposure hero, risk spectrum, distribution chart, trend, watchlist |
+| **Predictions** | Search, level/status filters, sortable triage table |
+| **Investigate** | Case vault: risk gauge, suggested response steps, MITRE, attack class, signals, behaviour timeline, attention map |
+| **System** | Live API health, base URL, session rows, batch snapshot |
+| **History** | Restore prior in-browser analysis reports |
+
+### Investigate case vault
+
+The Investigate page is the analyst dossier:
+
+1. **Brief** — suggested response checklist, decision/reason facts, MITRE + attack class  
+2. **Signals** — top suspicious events, Transformer findings, rule findings  
+3. **Evidence** — behaviour timeline (reconstruction pressure) + interactive attention map  
+
+### Sample / demo data
+
+| Asset | Location |
+|-------|----------|
+| Built-in SOC sample | `frontend/src/data/demoFeatureVectors.json` |
+| Employee roster | `datasets/employees.csv` |
+| Behaviour profiles | `datasets/behaviour_profiles.csv` |
+| Event log (train/calibrate) | `datasets/events.csv` |
+
+---
+
+## Training & calibration
+
+| Task | Command |
+|------|---------|
+| Train Transformer | `python train_transformer_model.py` |
+| Train from events CSV | `python train_transformer_model.py --from-events datasets/events.csv` |
+| Calibrate anomaly mapping | `python calibrate_anomaly.py` |
+| Fit Isolation Forest | `python integration.py --prepare-model` |
+| End-to-end Python demo (no UI) | `python integration.py` |
+
+Default Transformer train knobs include epoch count, employee/day sampling, and max sequence length (see script `--help`).
+
+Core code: `synthetic_data/behavioural_transformer/`.
+
+---
+
+## Tests
+
+```bash
+pytest tests/ -q
 ```
 
----
-
-## Screenshots Placeholder
-
-> **Screenshots** (add before submission / GitHub release):
->
-> 1. SOC Dashboard overview — stats cards + risk distribution chart  
-> 2. Employee table with CRITICAL / HIGH highlighting  
-> 3. Explanation panel — summary, factors, observations, recommendation  
-> 4. Swagger UI (`/docs`) showing `/predict` response  
->
-> Place images under `docs/screenshots/` and link them here, for example:
->
-> `![SOC Dashboard](docs/screenshots/dashboard.png)`
+Tests use mocks and deterministic fixtures. They do **not** retrain production models.
 
 ---
 
-## Future Improvements
+## Environment variables
 
-- Evaluation harness comparing Isolation Forest scores to simulator attack labels (offline only)
-- Model registry & versioning for Isolation Forest artifacts
-- Richer timeline → feature export from multi-day simulations into the dashboard
-- Role-based access / SSO for production SOC deployments
-- Alert routing (email / ticket) for CRITICAL assessments
-- Hardened CORS and reverse-proxy deployment guides
+| Variable | Where | Purpose |
+|----------|--------|---------|
+| `SENTINELAI_MODEL_PATH` | root `.env` | Path to `.pt` or `.joblib` detector |
+| `SENTINELAI_DETECTOR` | root `.env` | Optional force: `transformer` \| `iforest` |
+| `API_HOST` / `API_PORT` | root `.env` | Uvicorn bind (via `run_backend.py`) |
+| `VITE_API_BASE_URL` | root or `frontend/.env` | SOC UI → API base URL |
+
+Do not commit real secrets. `.env` should stay local; use `.env.example` as the template.
+
+---
+
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/01-upload.png" alt="Upload page" width="900"/>
+</p>
+<p align="center"><em>Upload — Excel ingest or sample batch</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/02-overview.png" alt="Overview page" width="900"/>
+</p>
+<p align="center"><em>Overview — batch stats and next-step workflow</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/03-risk.png" alt="Risk analysis page" width="900"/>
+</p>
+<p align="center"><em>Risk — exposure brief, spectrum, charts, watchlist</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/04-predictions.png" alt="Predictions triage table" width="900"/>
+</p>
+<p align="center"><em>Predictions — filterable triage queue</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/05-investigate.png" alt="Investigate case vault" width="900"/>
+</p>
+<p align="center"><em>Investigate — case vault with suggested response and intelligence</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/06-evidence.png" alt="Investigate evidence stage" width="900"/>
+</p>
+<p align="center"><em>Evidence — behaviour timeline and attention map</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/07-system.png" alt="System health page" width="900"/>
+</p>
+<p align="center"><em>System — API health and session load</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/08-swagger.png" alt="FastAPI Swagger docs" width="900"/>
+</p>
+<p align="center"><em>API docs — interactive OpenAPI at <code>/docs</code></em></p>
+
+To refresh screenshots with the stack running:
+
+```bash
+cd docs
+node capture-screens.mjs
+```
+
+Diagrams also in-repo:
+
+- ![Pipeline](docs/architecture-pipeline.svg)
+- ![SOC workflow](docs/soc-workflow.svg)
+
+---
+
+## Design notes (SOC UI)
+
+- Brand: Hitachi-inspired red (`#E4002B`) on ink / light mist surfaces  
+- Type: Space Grotesk (headlines), Plus Jakarta Sans (UI), IBM Plex Mono (scores / IDs), Syne (display accents)  
+- Investigate stages use motion for page transitions; respect `prefers-reduced-motion`
+
+---
+
+## Troubleshooting
+
+| Symptom | Check |
+|---------|--------|
+| `/predict` returns 503 | `SENTINELAI_MODEL_PATH` missing or file not found; train or prepare a model |
+| Frontend cannot reach API | `VITE_API_BASE_URL`, CORS (Vite on `5173`), backend running |
+| Empty Investigate page | Load a batch and select a prediction row first |
+| Attention unavailable | Transformer path required; Isolation Forest will not emit attention weights |
+
+---
+
+## Future improvements
+
+- Offline evaluation harness vs simulator attack labels  
+- Model registry / versioning for detector artifacts  
+- Alert routing (ticket / email) for CRITICAL cases  
+- Hardened CORS + reverse-proxy deployment guide  
+- Role-based access for multi-analyst deployments  
 
 ---
 
 ## License
 
-This project is provided for academic demonstration and portfolio use.
+Provided for academic demonstration and portfolio use.
 
 ```text
-MIT License (recommended for GitHub publication)
+MIT License
 
 Copyright (c) 2026 SentinelAI contributors
 
@@ -284,4 +480,4 @@ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 ```
 
-If your university or hackathon requires a different license, replace this section accordingly.
+Replace this section if your course or organization requires a different license.

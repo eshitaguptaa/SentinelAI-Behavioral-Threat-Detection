@@ -1,8 +1,8 @@
 import { memo, useMemo } from "react";
 import {
+  Area,
   CartesianGrid,
-  Line,
-  LineChart,
+  ComposedChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -17,21 +17,24 @@ interface RiskTrendProps {
 }
 
 function RiskTrend({ rows }: RiskTrendProps) {
-  const data = useMemo(() => {
-    // Preserve analysed-session order by descending risk (actual scores, no smoothing).
+  const { data, tickInterval } = useMemo(() => {
     const sorted = [...rows].sort((a, b) => b.risk_score - a.risk_score);
-    return sorted.map((row, index) => ({
+    const points = sorted.map((row, index) => ({
       label: String(index + 1),
       employee: row.employee_id,
       anomaly: Number(row.anomaly_score.toFixed(1)),
       risk: Number(row.risk_score.toFixed(1)),
+      level: row.risk_level,
     }));
+    const interval = points.length <= 8 ? 0 : points.length <= 16 ? 1 : 3;
+    return { data: points, tickInterval: interval };
   }, [rows]);
 
   if (data.length === 0) {
     return (
       <section className={styles.panel} aria-label="Risk trend">
-        <h2 className={styles.title}>Risk Trend</h2>
+        <p className={styles.kicker}>Trend</p>
+        <h2 className={styles.title}>Score curve</h2>
         <p className={styles.empty}>Run batch analysis to plot anomaly vs risk.</p>
       </section>
     );
@@ -39,48 +42,99 @@ function RiskTrend({ rows }: RiskTrendProps) {
 
   return (
     <section className={styles.panel} aria-label="Risk trend">
-      <h2 className={styles.title}>Risk Trend</h2>
-      <p className={styles.caption}>
-        Sessions ordered by risk score (highest first) — raw analysed values.
-      </p>
+      <div className={styles.header}>
+        <div>
+          <p className={styles.kicker}>Trend</p>
+          <h2 className={styles.title}>Score curve</h2>
+          <p className={styles.caption}>
+            Ranked highest → lowest risk for this batch
+          </p>
+        </div>
+        <div className={styles.seriesKey} aria-hidden>
+          <span>
+            <i className={styles.anomalyKey} />
+            Anomaly
+          </span>
+          <span>
+            <i className={styles.riskKey} />
+            Risk
+          </span>
+        </div>
+      </div>
+
       <div className={styles.chart}>
-        <ResponsiveContainer width="100%" height={220}>
-          <LineChart data={data}>
-            <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
-            <XAxis dataKey="label" tick={{ fill: "#8a98a8", fontSize: 11 }} />
-            <YAxis domain={[0, 100]} tick={{ fill: "#8a98a8", fontSize: 11 }} />
+        <ResponsiveContainer width="100%" height={280}>
+          <ComposedChart data={data} margin={{ top: 16, right: 12, left: 0, bottom: 4 }}>
+            <defs>
+              <linearGradient id="riskAreaFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#e4002b" stopOpacity={0.22} />
+                <stop offset="100%" stopColor="#e4002b" stopOpacity={0.02} />
+              </linearGradient>
+              <linearGradient id="anomalyAreaFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#d2641f" stopOpacity={0.16} />
+                <stop offset="100%" stopColor="#d2641f" stopOpacity={0.01} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid stroke="rgba(17,17,17,0.05)" vertical={false} />
+            <XAxis
+              dataKey="label"
+              interval={tickInterval}
+              tick={{ fill: "#98a2b3", fontSize: 11 }}
+              axisLine={{ stroke: "rgba(17,17,17,0.1)" }}
+              tickLine={false}
+              minTickGap={20}
+            />
+            <YAxis
+              domain={[0, 100]}
+              tick={{ fill: "#98a2b3", fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+              width={28}
+            />
             <Tooltip
               contentStyle={{
-                background: "#121820",
-                border: "1px solid #243041",
-                borderRadius: 8,
+                background: "#111",
+                border: "none",
+                borderRadius: 0,
+                color: "#fff",
+                fontSize: 12,
+                padding: "10px 12px",
+                boxShadow: "0 12px 28px rgba(0,0,0,0.28)",
               }}
+              labelStyle={{ color: "rgba(255,255,255,0.55)", marginBottom: 4 }}
               formatter={(value, name) => [
                 value,
                 name === "anomaly" ? "Anomaly" : "Risk",
               ]}
               labelFormatter={(_label, payload) => {
-                const employee = payload?.[0]?.payload?.employee;
-                return employee ? String(employee) : "";
+                const point = payload?.[0]?.payload;
+                if (!point) return "";
+                return `${point.employee} · ${point.level}`;
               }}
             />
-            <Line
-              type="linear"
+            <Area
+              type="monotone"
               dataKey="anomaly"
-              stroke="#e08a3c"
-              strokeWidth={2}
-              dot={{ r: 3 }}
-              name="Anomaly"
+              stroke="#d2641f"
+              strokeWidth={2.2}
+              fill="url(#anomalyAreaFill)"
+              dot={false}
+              activeDot={{ r: 4.5, strokeWidth: 0, fill: "#d2641f" }}
+              name="anomaly"
+              animationDuration={1000}
             />
-            <Line
-              type="linear"
+            <Area
+              type="monotone"
               dataKey="risk"
-              stroke="#e24b4b"
-              strokeWidth={2}
-              dot={{ r: 3 }}
-              name="Risk"
+              stroke="#e4002b"
+              strokeWidth={2.5}
+              fill="url(#riskAreaFill)"
+              dot={false}
+              activeDot={{ r: 4.5, strokeWidth: 0, fill: "#e4002b" }}
+              name="risk"
+              animationDuration={1100}
             />
-          </LineChart>
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </section>

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280" role="img" aria-labelledby="title desc">
+  <title id="title">SentinelAI SOC analyst workflow</title>
+  <desc id="desc">Upload to overview to risk to predictions to investigate</desc>
+  <rect width="960" height="280" fill="#ECECEC"/>
+  <g font-family="Segoe UI, Helvetica, Arial, sans-serif">
+    <text x="40" y="42" font-size="14" font-weight="700" fill="#E4002B" letter-spacing="2">SOC WORKFLOW</text>
+    <text x="40" y="68" font-size="22" font-weight="700" fill="#111111">From upload to case dossier</text>
+
+    <!-- steps -->
+    <rect x="40" y="100" width="160" height="120" fill="#FFFFFF" stroke="rgba(17,17,17,0.12)"/>
+    <text x="56" y="128" font-size="12" font-weight="700" fill="#E4002B">01</text>
+    <text x="56" y="154" font-size="16" font-weight="700" fill="#111111">Upload</text>
+    <text x="56" y="178" font-size="12" fill="#667085">Excel workbook or</text>
+    <text x="56" y="196" font-size="12" fill="#667085">built-in sample batch</text>
+
+    <rect x="220" y="100" width="160" height="120" fill="#FFFFFF" stroke="rgba(17,17,17,0.12)"/>
+    <text x="236" y="128" font-size="12" font-weight="700" fill="#E4002B">02</text>
+    <text x="236" y="154" font-size="16" font-weight="700" fill="#111111">Overview</text>
+    <text x="236" y="178" font-size="12" fill="#667085">Batch counts and</text>
+    <text x="236" y="196" font-size="12" fill="#667085">confirmed threats</text>
+
+    <rect x="400" y="100" width="160" height="120" fill="#FFFFFF" stroke="rgba(17,17,17,0.12)"/>
+    <text x="416" y="128" font-size="12" font-weight="700" fill="#E4002B">03</text>
+    <text x="416" y="154" font-size="16" font-weight="700" fill="#111111">Risk</text>
+    <text x="416" y="178" font-size="12" fill="#667085">Spectrum, curve,</text>
+    <text x="416" y="196" font-size="12" fill="#667085">and watchlist</text>
+
+    <rect x="580" y="100" width="160" height="120" fill="#FFFFFF" stroke="rgba(17,17,17,0.12)"/>
+    <text x="596" y="128" font-size="12" font-weight="700" fill="#E4002B">04</text>
+    <text x="596" y="154" font-size="16" font-weight="700" fill="#111111">Predictions</text>
+    <text x="596" y="178" font-size="12" fill="#667085">Filter, sort, and</text>
+    <text x="596" y="196" font-size="12" fill="#667085">open a case</text>
+
+    <rect x="760" y="100" width="160" height="120" fill="#111111"/>
+    <rect x="760" y="100" width="4" height="120" fill="#E4002B"/>
+    <text x="776" y="128" font-size="12" font-weight="700" fill="#FF6B86">05</text>
+    <text x="776" y="154" font-size="16" font-weight="700" fill="#FFFFFF">Investigate</text>
+    <text x="776" y="178" font-size="12" fill="rgba(255,255,255,0.65)">Brief, signals,</text>
+    <text x="776" y="196" font-size="12" fill="rgba(255,255,255,0.65)">timeline, attention</text>
+  </g>
+</svg>

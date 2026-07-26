@@ -43,7 +43,7 @@ export function toUserFriendlyError(error: unknown): string {
       return "Invalid request. Check feature vector fields and try again.";
     }
     if (ax.response.status === 422) {
-      return "Request validation failed. Some required fields are missing or invalid.";
+      return "Request validation failed. Some required fields are missing or invalid — check your columns against the template.";
     }
     return `Backend error (${ax.response.status}). Please try again.`;
   }
