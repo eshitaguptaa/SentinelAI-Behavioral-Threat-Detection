@@ -178,12 +178,83 @@ class PredictResponse(BaseModel):
     mitre: MitreMappingOut | None = None
     cold_start: ColdStartOut | None = None
     concept_drift: ConceptDriftOut | None = None
+    campaign_id: str | None = Field(
+        default=None,
+        description=(
+            "Optional correlation metadata from the request payload "
+            "(not an ML feature)."
+        ),
+    )
 
 
 class PredictBatchResponse(BaseModel):
     """Batch pipeline results."""
 
     results: list[PredictResponse]
+
+
+class CampaignStageOut(BaseModel):
+    """One stage in a correlated kill-chain case."""
+
+    stage_index: int
+    stage_label: str
+    employee_id: str
+    simulation_day: str
+    attack_type: str
+    attack_confidence: float
+    risk_score: float
+    risk_level: str
+    status: str
+    matched_signals: list[str] = Field(default_factory=list)
+    contributing_factors: list[str] = Field(default_factory=list)
+    observations: list[str] = Field(default_factory=list)
+    mitre: MitreMappingOut | None = None
+    is_focus: bool = False
+    result_index: int | None = None
+
+
+class CampaignCaseOut(BaseModel):
+    """Correlated multi-stage campaign for SOC investigation."""
+
+    case_id: str
+    campaign_id: str | None = None
+    campaign_name: str
+    campaign_type: str
+    correlation_basis: str
+    summary: str
+    entity_ids: list[str]
+    stage_count: int
+    peak_risk_score: float
+    peak_risk_level: str
+    status: str
+    stages: list[CampaignStageOut]
+    focus_stage_index: int | None = None
+
+
+class CorrelateCampaignsRequest(BaseModel):
+    """Request body for ``POST /correlate/campaigns``."""
+
+    results: list[PredictResponse] = Field(
+        ...,
+        min_length=1,
+        description="Scored batch results to correlate into campaign cases",
+    )
+    focus_employee_id: str | None = Field(
+        default=None,
+        description="Highlight / prefer the case containing this employee",
+    )
+    focus_simulation_day: str | None = Field(
+        default=None,
+        description="Optional day to mark as the focus stage",
+    )
+
+
+class CorrelateCampaignsResponse(BaseModel):
+    """Correlated campaign cases for a scored batch."""
+
+    cases: list[CampaignCaseOut]
+    focus_case: CampaignCaseOut | None = None
+    multi_stage_count: int = 0
 
 
 class TimelineEventPayload(BaseModel):

@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 import { useAnalysis } from "../contexts/AnalysisContext";
-import { Logo } from "./Logo";
+import { BrandName, Logo } from "./Logo";
 import styles from "./Sidebar.module.css";
 
 export default function Sidebar() {
@@ -38,7 +38,9 @@ export default function Sidebar() {
       <Link to="/app" className={styles.brand} aria-label="SentinelAI workspace home">
         <Logo withWordmark={false} size={32} />
         <span className={styles.brandText}>
-          <span className={styles.brandName}>SentinelAI</span>
+          <span className={styles.brandName}>
+            <BrandName tone="light" />
+          </span>
           <span className={styles.brandSub}>SOC Workspace</span>
         </span>
       </Link>

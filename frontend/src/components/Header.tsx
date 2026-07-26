@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-import { Logo } from "./Logo";
+import { BrandName, Logo } from "./Logo";
 import styles from "./Header.module.css";
 
 import type { BackendStatus } from "../types/models";
@@ -23,7 +23,9 @@ export default function Header({ backendStatus, appVersion }: HeaderProps) {
         <Link to="/" className={styles.brandLink} aria-label="Back to SentinelAI home">
           <Logo withWordmark={false} size={32} />
           <div>
-            <span className={styles.title}>SentinelAI</span>
+            <span className={styles.title}>
+              <BrandName tone="dark" />
+            </span>
             <p className={styles.subtitle}>SOC Dashboard</p>
           </div>
         </Link>

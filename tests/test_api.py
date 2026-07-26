@@ -15,11 +15,19 @@ from fastapi.testclient import TestClient
 
 from synthetic_data.anomaly_detection.scoring import AnomalyPrediction
 from synthetic_data.api.app import create_app
-from synthetic_data.api.routes import health, predict, predict_batch, root
+from synthetic_data.api.routes import (
+    correlate_campaign_cases,
+    health,
+    predict,
+    predict_batch,
+    root,
+)
 from synthetic_data.api.schemas import (
+    CorrelateCampaignsRequest,
     FeatureVectorPayload,
     PredictBatchRequest,
     PredictRequest,
+    PredictResponse,
 )
 from synthetic_data.feature_engineering.feature_schema import FeatureVector
 
@@ -179,3 +187,108 @@ def test_app_health_via_testclient() -> None:
         response = client.get("/")
         assert response.status_code == 200
         assert response.json()["application"] == "SentinelAI"
+
+
+def _minimal_predict_response(
+    *,
+    employee_id: str,
+    day: str,
+    attack_type: str,
+    risk: float,
+    campaign_id: str | None = None,
+) -> PredictResponse:
+    payload = {
+        "prediction": {
+            "employee_id": employee_id,
+            "simulation_day": day,
+            "raw_score": -0.2,
+            "normalized_score": risk,
+            "prediction": -1,
+            "is_anomaly": True,
+        },
+        "risk_assessment": {
+            "employee_id": employee_id,
+            "simulation_day": day,
+            "anomaly_score": risk,
+            "risk_score": risk,
+            "risk_level": "HIGH",
+            "contributing_factors": ["anomaly"],
+            "recommendation": "review",
+        },
+        "attack_classification": {
+            "employee_id": employee_id,
+            "simulation_day": day,
+            "attack_type": attack_type,
+            "attack_confidence": 0.9,
+            "matched_signals": [f"type={attack_type}"],
+        },
+        "explanation": {
+            "employee_id": employee_id,
+            "simulation_day": day,
+            "risk_score": risk,
+            "risk_level": "HIGH",
+            "summary": "test",
+            "contributing_factors": ["factor"],
+            "observations": ["obs"],
+            "recommendation": "act",
+        },
+        "status": "Confirmed Threat",
+        "campaign_id": campaign_id,
+    }
+    return PredictResponse.model_validate(payload)
+
+
+def test_correlate_campaigns_route() -> None:
+    """POST /correlate/campaigns reconstructs a multi-stage kill chain."""
+    results = [
+        _minimal_predict_response(
+            employee_id="EMP-K01",
+            day="2026-03-08",
+            attack_type="Brute Force",
+            risk=82,
+            campaign_id="CMP-DEMO-BRUTE-EXFIL",
+        ),
+        _minimal_predict_response(
+            employee_id="EMP-K01",
+            day="2026-03-09",
+            attack_type="Lateral Movement",
+            risk=78,
+            campaign_id="CMP-DEMO-BRUTE-EXFIL",
+        ),
+        _minimal_predict_response(
+            employee_id="EMP-K01",
+            day="2026-03-10",
+            attack_type="Mass Download",
+            risk=91,
+            campaign_id="CMP-DEMO-BRUTE-EXFIL",
+        ),
+    ]
+    response = correlate_campaign_cases(
+        CorrelateCampaignsRequest(
+            results=results,
+            focus_employee_id="EMP-K01",
+            focus_simulation_day="2026-03-09",
+        )
+    )
+    assert response.multi_stage_count >= 1
+    assert response.focus_case is not None
+    assert response.focus_case.stage_count == 3
+    assert response.focus_case.correlation_basis == "campaign_id"
+    assert [s.attack_type for s in response.focus_case.stages] == [
+        "Brute Force",
+        "Lateral Movement",
+        "Mass Download",
+    ]
+
+
+def test_predict_passes_campaign_id(
+    request_with_model: SimpleNamespace,
+) -> None:
+    """Optional campaign_id on the feature payload is echoed in the response."""
+    body = PredictRequest(
+        feature_vector=FeatureVectorPayload.model_validate(
+            _vector_payload(campaign_id="CMP-TEST-1")
+        )
+    )
+    response = predict(request_with_model, body)
+    assert response.campaign_id == "CMP-TEST-1"

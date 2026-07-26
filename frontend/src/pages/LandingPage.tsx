@@ -10,7 +10,7 @@ import {
   useTransform,
 } from "framer-motion";
 
-import { Logo } from "../components/Logo";
+import { BrandName, Logo } from "../components/Logo";
 import styles from "./LandingPage.module.css";
 
 const NAV_LINKS = [
@@ -268,7 +268,7 @@ function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           >
-            SentinelAI
+            <BrandName />
           </motion.p>
           <motion.div
             className={styles.heroRule}
@@ -578,7 +578,10 @@ export default function LandingPage() {
           </div>
 
           <div className={styles.footerBottom}>
-            <p>© {new Date().getFullYear()} SentinelAI. Behavioural Threat Detection.</p>
+            <p>
+              © {new Date().getFullYear()} <BrandName />. Behavioural Threat
+              Detection.
+            </p>
             <p>
               Visual language inspired by{" "}
               <a

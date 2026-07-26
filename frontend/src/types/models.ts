@@ -141,10 +141,52 @@ export interface PredictResult {
     reason: string;
     adjusted_normalized_score: number;
   } | null;
+  /** Optional correlation metadata (not an ML feature). */
+  campaign_id?: string | null;
 }
 
 export interface PredictBatchResponse {
   results: PredictResult[];
+}
+
+export interface CampaignStage {
+  stage_index: number;
+  stage_label: string;
+  employee_id: string;
+  simulation_day: string;
+  attack_type: string;
+  attack_confidence: number;
+  risk_score: number;
+  risk_level: string;
+  status: string;
+  matched_signals: string[];
+  contributing_factors: string[];
+  observations: string[];
+  mitre?: MitreMapping | null;
+  is_focus: boolean;
+  result_index?: number | null;
+}
+
+export interface CampaignCase {
+  case_id: string;
+  campaign_id?: string | null;
+  campaign_name: string;
+  campaign_type: string;
+  correlation_basis: string;
+  summary: string;
+  entity_ids: string[];
+  stage_count: number;
+  peak_risk_score: number;
+  peak_risk_level: string;
+  status: string;
+  stages: CampaignStage[];
+  focus_stage_index?: number | null;
+}
+
+export interface CorrelateCampaignsResponse {
+  cases: CampaignCase[];
+  focus_case: CampaignCase | null;
+  multi_stage_count: number;
 }
 
 /** Flattened row for the employee table. */

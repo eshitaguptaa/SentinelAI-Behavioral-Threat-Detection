@@ -29,7 +29,7 @@ function SocShell() {
     <div className={styles.shell}>
       <Sidebar />
       <div className={styles.mainColumn}>
-        <main className={styles.main}>
+        <main className={styles.main} data-scroll-root>
           {error ? (
             <div className={styles.error} role="alert">
               <div>

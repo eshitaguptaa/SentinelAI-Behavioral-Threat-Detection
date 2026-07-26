@@ -1,9 +1,11 @@
+import demoCampaignChain from "../data/demoCampaignChain.json";
 import demoFeatureVectors from "../data/demoFeatureVectors.json";
 
 import axios, { AxiosError } from "axios";
 
 import type {
   AppInfo,
+  CorrelateCampaignsResponse,
   FeatureVectorPayload,
   HealthStatus,
   PredictBatchResponse,
@@ -81,20 +83,36 @@ export async function predictBatch(
   return data.results;
 }
 
+export async function correlateCampaigns(
+  results: PredictResult[],
+  focusEmployeeId?: string | null,
+  focusSimulationDay?: string | null,
+): Promise<CorrelateCampaignsResponse> {
+  const { data } = await client.post<CorrelateCampaignsResponse>(
+    "/correlate/campaigns",
+    {
+      results,
+      focus_employee_id: focusEmployeeId ?? null,
+      focus_simulation_day: focusSimulationDay ?? null,
+    },
+  );
+  return data;
+}
+
 type DemoKind = "normal" | "mild_anomaly" | "confirmed_attack";
 
 type DemoVectorRecord = FeatureVectorPayload & {
   demo_kind?: DemoKind;
   attack_scenario?: string;
+  campaign_id?: string;
 };
 
 /**
  * Enterprise-realistic demo vectors for the SOC dashboard.
  *
  * Mix (~24 users): ~75% normal, ~10% mild behavioural anomalies (no attack
- * rule), ~15% confirmed attacks. Normal sessions are sampled from the same
- * ``events.csv`` distribution used to train the Transformer — no attack
- * features are injected into normal rows.
+ * rule), ~15% confirmed attacks. Appends a 3-stage EMP-K01 kill chain so
+ * Investigate can expand one alert into a campaign timeline.
  *
  * Source of truth: ``synthetic_data/demo/session_generator.py``
  * (regenerate JSON via ``scripts/export_and_audit_demo.py``).
@@ -132,7 +150,7 @@ export function buildDemoFeatureVectors(
     ...pick(attacks.length ? attacks : source, nAttack, 7),
   ].slice(0, count);
 
-  return selected.map((row, index) => {
+  const remapped = selected.map((row, index) => {
     const { demo_kind: _kind, attack_scenario: _scenario, ...rest } = row;
     return {
       ...rest,
@@ -141,4 +159,17 @@ export function buildDemoFeatureVectors(
       event_sequence: [...(row.event_sequence ?? [])],
     };
   });
+
+  const chain = (demoCampaignChain as DemoVectorRecord[]).map((row) => {
+    const { demo_kind: _kind, attack_scenario: _scenario, ...rest } = row;
+    return {
+      ...rest,
+      employee_id: row.employee_id,
+      simulation_day: row.simulation_day,
+      campaign_id: row.campaign_id,
+      event_sequence: [...(row.event_sequence ?? [])],
+    };
+  });
+
+  return [...remapped, ...chain];
 }

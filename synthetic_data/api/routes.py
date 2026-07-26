@@ -19,9 +19,14 @@ from synthetic_data.api.schemas import (
     AnomalyPredictionOut,
     AttackClassificationOut,
     BehaviourInsightOut,
+    CampaignCaseOut,
+    CampaignStageOut,
     ColdStartOut,
     ConceptDriftOut,
+    CorrelateCampaignsRequest,
+    CorrelateCampaignsResponse,
     ErrorResponse,
+    FeatureVectorPayload,
     HealthResponse,
     MitreMappingOut,
     PredictBatchRequest,
@@ -35,6 +40,7 @@ from synthetic_data.api.schemas import (
     StreamWindowResponse,
     SuspiciousEventOut,
     TimelineEventPayload,
+    feature_payload_to_dict,
 )
 from synthetic_data.api.validation import (
     ApiValidationError,
@@ -52,6 +58,12 @@ from synthetic_data.adaptation import (
 from synthetic_data.attack_classification import classify_attack
 from synthetic_data.attack_classification.schema import AttackClassification
 from synthetic_data.behavioural_transformer.schema import SessionSequence
+from synthetic_data.campaign_correlation import (
+    CampaignCase,
+    correlate_campaigns,
+    find_focus_case,
+    sessions_from_predict_payloads,
+)
 from synthetic_data.decision_status import derive_final_status
 from synthetic_data.explainability import explain as explain_risk
 from synthetic_data.explainability.schema import RiskExplanation
@@ -179,6 +191,68 @@ def _behaviour_out(insight: dict[str, Any] | None) -> BehaviourInsightOut | None
     )
 
 
+def _extract_campaign_id(payload: FeatureVectorPayload | dict[str, Any]) -> str | None:
+    """Pull optional campaign_id correlation metadata (not an ML feature)."""
+    raw = (
+        feature_payload_to_dict(payload)
+        if isinstance(payload, FeatureVectorPayload)
+        else dict(payload)
+    )
+    value = raw.get("campaign_id")
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _campaign_stage_out(stage: Any) -> CampaignStageOut:
+    mitre = None
+    if stage.mitre:
+        mitre = MitreMappingOut(
+            attack_type=str(stage.mitre.get("attack_type", stage.attack_type)),
+            tactic_id=str(stage.mitre.get("tactic_id", "")),
+            tactic_name=str(stage.mitre.get("tactic_name", "")),
+            technique_id=str(stage.mitre.get("technique_id", "")),
+            technique_name=str(stage.mitre.get("technique_name", "")),
+            description=str(stage.mitre.get("description", "")),
+        )
+    return CampaignStageOut(
+        stage_index=int(stage.stage_index),
+        stage_label=str(stage.stage_label),
+        employee_id=str(stage.employee_id),
+        simulation_day=str(stage.simulation_day),
+        attack_type=str(stage.attack_type),
+        attack_confidence=float(stage.attack_confidence),
+        risk_score=float(stage.risk_score),
+        risk_level=str(stage.risk_level),
+        status=str(stage.status),
+        matched_signals=list(stage.matched_signals),
+        contributing_factors=list(stage.contributing_factors),
+        observations=list(stage.observations),
+        mitre=mitre,
+        is_focus=bool(stage.is_focus),
+        result_index=stage.result_index,
+    )
+
+
+def _campaign_case_out(case: CampaignCase) -> CampaignCaseOut:
+    return CampaignCaseOut(
+        case_id=case.case_id,
+        campaign_id=case.campaign_id,
+        campaign_name=case.campaign_name,
+        campaign_type=case.campaign_type,
+        correlation_basis=case.correlation_basis,
+        summary=case.summary,
+        entity_ids=list(case.entity_ids),
+        stage_count=int(case.stage_count),
+        peak_risk_score=float(case.peak_risk_score),
+        peak_risk_level=str(case.peak_risk_level),
+        status=str(case.status),
+        stages=[_campaign_stage_out(stage) for stage in case.stages],
+        focus_stage_index=case.focus_stage_index,
+    )
+
+
 def _mitre_out(attack_type: str) -> MitreMappingOut | None:
     payload = mitre_dict(attack_type)
     if not payload:
@@ -224,6 +298,8 @@ def _run_pipeline(
     model: Any,
     vector: FeatureVector,
     event_sequence: list[str] | None = None,
+    *,
+    campaign_id: str | None = None,
 ) -> PredictResponse:
     """Execute Detector → Cold-start/Drift → Attack → Risk → Status → Explain.
 
@@ -311,6 +387,7 @@ def _run_pipeline(
         mitre=_mitre_out(attack.attack_type),
         cold_start=_cold_start_out(cold_start_dict(cold)),
         concept_drift=_drift_out(drift_dict(drift)),
+        campaign_id=campaign_id,
     )
 
 
@@ -362,8 +439,14 @@ def predict(request: Request, body: PredictRequest) -> PredictResponse:
     """Predict anomaly, risk, attack type, and explanation for one employee-day."""
     model = _get_model(request)
     try:
+        campaign_id = _extract_campaign_id(body.feature_vector)
         vector, event_sequence = build_feature_vector_with_sequence(body.feature_vector)
-        return _run_pipeline(model, vector, event_sequence)
+        return _run_pipeline(
+            model,
+            vector,
+            event_sequence,
+            campaign_id=campaign_id,
+        )
     except ApiValidationError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -402,8 +485,18 @@ def predict_batch(request: Request, body: PredictBatchRequest) -> PredictBatchRe
     try:
         vectors, sequences = build_feature_vectors_with_sequences(body.feature_vectors)
         results = [
-            _run_pipeline(model, vector, sequence)
-            for vector, sequence in zip(vectors, sequences, strict=True)
+            _run_pipeline(
+                model,
+                vector,
+                sequence,
+                campaign_id=_extract_campaign_id(payload),
+            )
+            for vector, sequence, payload in zip(
+                vectors,
+                sequences,
+                body.feature_vectors,
+                strict=True,
+            )
         ]
         return PredictBatchResponse(results=results)
     except ApiValidationError as exc:
@@ -417,6 +510,65 @@ def predict_batch(request: Request, body: PredictBatchRequest) -> PredictBatchRe
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Batch prediction failed due to an internal error",
+        ) from exc
+
+
+@router.post(
+    "/correlate/campaigns",
+    response_model=CorrelateCampaignsResponse,
+    summary="Correlate scored sessions into kill-chain campaign cases",
+    description=(
+        "Group batch prediction results into multi-stage CampaignCase objects "
+        "using campaign_id metadata and/or same-entity signature attacks within "
+        "a 7-day window. Does not retrain models or alter detection scores."
+    ),
+    responses={
+        200: {"model": CorrelateCampaignsResponse},
+        400: {"model": ErrorResponse},
+        422: {"model": ErrorResponse},
+    },
+    tags=["correlation"],
+)
+def correlate_campaign_cases(
+    body: CorrelateCampaignsRequest,
+) -> CorrelateCampaignsResponse:
+    """Build kill-chain cases from already-scored PredictResponse rows."""
+    try:
+        payloads = [result.model_dump() for result in body.results]
+        sessions = sessions_from_predict_payloads(payloads)
+        if not sessions:
+            raise ApiValidationError(
+                "No correlatable sessions in results",
+                code="empty_sessions",
+            )
+        cases = correlate_campaigns(
+            sessions,
+            focus_employee_id=body.focus_employee_id,
+            focus_simulation_day=body.focus_simulation_day,
+        )
+        focus = find_focus_case(
+            cases,
+            focus_employee_id=body.focus_employee_id,
+            focus_simulation_day=body.focus_simulation_day,
+        )
+        case_outs = [_campaign_case_out(case) for case in cases]
+        focus_out = _campaign_case_out(focus) if focus else None
+        return CorrelateCampaignsResponse(
+            cases=case_outs,
+            focus_case=focus_out,
+            multi_stage_count=sum(1 for case in cases if case.stage_count >= 2),
+        )
+    except ApiValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 — map to safe 500
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Campaign correlation failed due to an internal error",
         ) from exc
 
 

@@ -226,7 +226,13 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
       try {
         const results = await predictBatch(vectors);
         const nextRows = toRows(results).sort((a, b) => b.risk_score - a.risk_score);
-        const nextSelectedId = nextRows[0]?.id ?? null;
+        // Prefer EMP-K01 kill-chain stage for the demo path when present.
+        const killChainRow = nextRows.find(
+          (row) =>
+            row.employee_id === "EMP-K01" &&
+            row.simulation_day === "2026-03-09",
+        );
+        const nextSelectedId = killChainRow?.id ?? nextRows[0]?.id ?? null;
         setLoadedVectors(vectors);
         setSourceFileName(label);
         setRows(nextRows);

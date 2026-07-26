@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import RequireAnalysis from "./components/RequireAnalysis";
+import ScrollToTop from "./components/ScrollToTop";
 import SocLayout from "./layouts/SocLayout";
 import HistoryPage from "./pages/HistoryPage";
 import InvestigatePage from "./pages/InvestigatePage";
@@ -15,6 +16,7 @@ import styles from "./App.module.css";
 export default function App() {
   return (
     <div className={styles.app}>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/app" element={<SocLayout />}>

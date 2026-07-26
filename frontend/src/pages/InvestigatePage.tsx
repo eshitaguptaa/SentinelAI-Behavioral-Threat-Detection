@@ -21,11 +21,15 @@ import {
 
 import AttentionHeatmap from "../components/AttentionHeatmap";
 import BehaviourTimeline from "../components/BehaviourTimeline";
+import CampaignKillChain from "../components/CampaignKillChain";
 import { useAnalysis } from "../contexts/AnalysisContext";
+import { correlateCampaigns, toUserFriendlyError } from "../services/api";
 import {
   ATTACK_COLORS,
   RISK_COLORS,
   STATUS_COLORS,
+  type CampaignCase,
+  type CampaignStage,
   type PredictResult,
 } from "../types/models";
 import styles from "./InvestigatePage.module.css";
@@ -456,9 +460,11 @@ function SignalsStage({ result }: { result: PredictResult }) {
 }
 
 export default function InvestigatePage() {
-  const { selectedResult, rows, selectedId } = useAnalysis();
+  const { selectedResult, rows, selectedId, selectRow } = useAnalysis();
   const reduceMotion = useReducedMotion();
   const [stage, setStage] = useState<Stage>("brief");
+  const [campaign, setCampaign] = useState<CampaignCase | null>(null);
+  const [campaignError, setCampaignError] = useState<string | null>(null);
 
   const riskScore = selectedResult?.risk_assessment.risk_score ?? 0;
   const anomalyScore = selectedResult?.prediction.normalized_score ?? 0;
@@ -478,6 +484,46 @@ export default function InvestigatePage() {
   useEffect(() => {
     setStage("brief");
   }, [caseKey]);
+
+  useEffect(() => {
+    if (!selectedResult || rows.length === 0) {
+      setCampaign(null);
+      setCampaignError(null);
+      return;
+    }
+
+    let cancelled = false;
+    const results = rows.map((row) => row.result);
+    void (async () => {
+      try {
+        const response = await correlateCampaigns(
+          results,
+          selectedResult.prediction.employee_id,
+          selectedResult.prediction.simulation_day,
+        );
+        if (cancelled) return;
+        setCampaign(response.focus_case);
+        setCampaignError(null);
+      } catch (error) {
+        if (cancelled) return;
+        setCampaign(null);
+        setCampaignError(toUserFriendlyError(error));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedResult, rows]);
+
+  const openCampaignStage = (stageRow: CampaignStage) => {
+    const match = rows.find(
+      (row) =>
+        row.employee_id === stageRow.employee_id &&
+        row.simulation_day === stageRow.simulation_day,
+    );
+    if (match) selectRow(match);
+  };
 
   const stageMotion = useMemo(
     () =>
@@ -538,7 +584,7 @@ export default function InvestigatePage() {
           <h3>Select a prediction</h3>
           <p>
             Pick a row from the triage queue. This page becomes a full case vault for
-            that session.
+            that session — and expands into a kill chain when stages correlate.
           </p>
           <Link to="/app/predictions" className={styles.primaryBtn}>
             Open Predictions
@@ -624,6 +670,14 @@ export default function InvestigatePage() {
                 >
                   {attack_classification.attack_type}
                 </span>
+                {campaign && campaign.stage_count >= 2 ? (
+                  <span
+                    className={styles.badge}
+                    style={{ "--badge-color": "#e4002b" } as CSSProperties}
+                  >
+                    Kill chain · {campaign.stage_count} stages
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -664,6 +718,16 @@ export default function InvestigatePage() {
             />
           </div>
         </section>
+
+        <CampaignKillChain
+          campaign={campaign}
+          onOpenStage={openCampaignStage}
+        />
+        {campaignError ? (
+          <p className={styles.pageCaption} role="status">
+            Kill-chain correlation unavailable: {campaignError}
+          </p>
+        ) : null}
 
         <nav className={styles.stageNav} aria-label="Investigation stages">
           {STAGES.map((item) => {
