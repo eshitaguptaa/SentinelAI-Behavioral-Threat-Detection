@@ -6,7 +6,7 @@
 > | Resource | Link |
 > |:---------|:-----|
 > | **Live production demo** | [https://sentinel-ai-behavioral-threat-detec.vercel.app/](https://sentinel-ai-behavioral-threat-detec.vercel.app/) |
-> | **Demo video** | [Watch on Google Drive](https://drive.google.com/file/d/1vXGCn1cFWtUO_SI8SSxnTMBPRhSg6TEk/view?usp=sharing) |
+> | **Demo video** | [Watch on Google Drive](https://drive.google.com/drive/folders/1lx4J1kTKugMUaBTTGAO9ncda5uuYa4Xy?usp=sharing) |
 
 # SentinelAI
 
