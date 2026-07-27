@@ -10,6 +10,7 @@ import {
 
 import {
   buildDemoFeatureVectors,
+  BATCH_CHUNK_SIZE,
   DEMO_SAMPLE_SIZE,
   fetchAppInfo,
   fetchHealth,
@@ -232,7 +233,7 @@ export function AnalysisProvider({ children }: { children: ReactNode }) {
       setErrorTitle(null);
       try {
         const results =
-          vectors.length > 40
+          vectors.length > BATCH_CHUNK_SIZE
             ? await predictBatchChunked(vectors)
             : await predictBatch(vectors);
         const nextRows = toRows(results).sort((a, b) => b.risk_score - a.risk_score);

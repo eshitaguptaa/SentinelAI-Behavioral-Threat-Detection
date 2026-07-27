@@ -21,7 +21,8 @@ const API_BASE_URL =
 
 const client = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 60_000,
+  // Railway CPU inference can exceed 60s under load / cold start.
+  timeout: 180_000,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -33,7 +34,7 @@ export function toUserFriendlyError(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const ax = error as AxiosError<{ detail?: string | unknown }>;
     if (ax.code === "ECONNABORTED") {
-      return "Request timed out. Check that the SentinelAI API is running.";
+      return "Request timed out while scoring. Try again — the API may be busy or waking up.";
     }
     if (!ax.response) {
       return "Unable to reach the SentinelAI backend. Verify the API is online.";
@@ -114,7 +115,7 @@ type DemoVectorRecord = FeatureVectorPayload & {
 /** Default enterprise sample size (matches exported demoFeatureVectors.json). */
 export const DEMO_SAMPLE_SIZE = 500;
 
-const BATCH_CHUNK_SIZE = 40;
+export const BATCH_CHUNK_SIZE = 25;
 
 /**
  * Enterprise-realistic demo vectors for the SOC dashboard.
