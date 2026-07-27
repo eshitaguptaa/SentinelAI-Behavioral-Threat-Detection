@@ -1,7 +1,12 @@
-> ⚠️ **IMPORTANT NOTE FOR REVIEWERS** ⚠️  
-> The original Vercel deployment link submitted for this project is no longer active due to a platform pruning issue.  
-> The live, fully functional production build can be evaluated here:  
-> **[https://sentinel-ai-behavioral-threat-detec.vercel.app/](https://sentinel-ai-behavioral-threat-detec.vercel.app/)**
+> [!IMPORTANT]
+> **Note for reviewers — use these links**
+>
+> The original Vercel deployment URL submitted with this project is **no longer active** (platform pruning of temporary deploy links).
+>
+> | Resource | Link |
+> |:---------|:-----|
+> | **Live production demo** | [https://sentinel-ai-behavioral-threat-detec.vercel.app/](https://sentinel-ai-behavioral-threat-detec.vercel.app/) |
+> | **Demo video** | [Watch on Google Drive](https://drive.google.com/file/d/1vXGCn1cFWtUO_SI8SSxnTMBPRhSg6TEk/view?usp=sharing) |
 
 # SentinelAI
 
