@@ -79,7 +79,7 @@ export function Hero() {
               onClick={() => {
                 const ppt =
                   process.env.NEXT_PUBLIC_LANDING_PPT_URL ||
-                  "/assets/sentinelai-deck.pptx";
+                  "/assets/sentinelai-deck.pdf";
                 const report =
                   process.env.NEXT_PUBLIC_LANDING_REPORT_URL ||
                   "/assets/sentinelai-report.pdf";
@@ -91,7 +91,7 @@ export function Hero() {
                   link.click();
                   link.remove();
                 };
-                trigger(ppt, "sentinelai-deck.pptx");
+                trigger(ppt, "sentinelai-deck.pdf");
                 window.setTimeout(() => trigger(report, "sentinelai-report.pdf"), 250);
               }}
             >

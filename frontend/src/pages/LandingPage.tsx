@@ -20,9 +20,9 @@ const NAV_LINKS = [
   { href: "#outcomes", label: "Outcomes" },
 ];
 
-/** Presentation deck (.pptx). Override with VITE_LANDING_PPT_URL. */
+/** Presentation deck (.pdf). Override with VITE_LANDING_PPT_URL. */
 const LANDING_PPT_URL =
-  import.meta.env.VITE_LANDING_PPT_URL?.toString() || "/assets/sentinelai-deck.pptx";
+  import.meta.env.VITE_LANDING_PPT_URL?.toString() || "/assets/sentinelai-deck.pdf";
 
 /** Written report (.pdf). Override with VITE_LANDING_REPORT_URL. */
 const LANDING_REPORT_URL =
@@ -325,7 +325,7 @@ function Hero() {
       link.click();
       link.remove();
     };
-    triggerDownload(LANDING_PPT_URL, "sentinelai-deck.pptx");
+    triggerDownload(LANDING_PPT_URL, "sentinelai-deck.pdf");
     // Browsers often block two instant downloads; stagger the second.
     window.setTimeout(() => {
       triggerDownload(LANDING_REPORT_URL, "sentinelai-report.pdf");
